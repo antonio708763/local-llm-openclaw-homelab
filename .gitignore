@@ -1,0 +1,30 @@
+# Logs and temporary output
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Local secrets
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# OpenClaw and model runtime data
+.openclaw/
+ollama-models/
+models/
+cache/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local reports
+reports/
