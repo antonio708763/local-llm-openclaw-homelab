@@ -5,7 +5,7 @@ A documented build for running a local coding model on a dual-boot workstation a
 ## Target system
 
 - **Model:** `qwen3-coder:30b`
-- **Model runtime:** Ollama
+- **Model runtime:** Ollama `0.32.3`
 - **Agent/orchestration layer:** OpenClaw
 - **Primary host OS:** Ubuntu
 - **Secondary OS:** Windows 10
@@ -13,6 +13,7 @@ A documented build for running a local coding model on a dual-boot workstation a
 - **CPU:** AMD Ryzen 9 7950X
 - **Memory:** 64 GB DDR5
 - **Storage:** Separate NVMe drives for Windows and Ubuntu
+- **Shared storage:** `Dual_Boot_Share`, NTFS, mounted at `/mnt/Dual_Boot_Share`
 - **Remote-access goal:** LAN access plus encrypted remote access
 - **Likely remote networking:** Existing self-hosted NetBird deployment, pending audit
 
@@ -28,21 +29,41 @@ A documented build for running a local coding model on a dual-boot workstation a
 - [x] Resized the Windows NTFS partition using GParted
 - [x] Created an approximately 500 GB NTFS shared partition
 - [x] Named the shared partition `Dual_Boot_Share`
-- [x] Confirmed Ubuntu can access `Dual_Boot_Share`
+- [x] Verified Windows data integrity after the resize
+- [x] Configured and tested the Ubuntu mount at `/mnt/Dual_Boot_Share`
+- [x] Recorded the shared-partition UUID as `48003BD2003BC62A`
+- [x] Verified the NVIDIA driver and CUDA access
+- [x] Installed and enabled Ollama `0.32.3`
+- [x] Downloaded and tested `qwen3-coder:30b`
+- [x] Confirmed the model runs with `100% GPU` residency
+- [x] Confirmed a 32,768-token context allocation
 
 ### Next phases
 
-- [ ] Verify Windows data integrity after the resize
-- [ ] Configure a permanent Ubuntu mount point for `Dual_Boot_Share`
-- [ ] Verify NVIDIA driver and CUDA access
-- [ ] Install Ollama
-- [ ] Pull and benchmark `qwen3-coder:30b`
+- [ ] Confirm the shared partition mounts automatically after a reboot
 - [ ] Install and configure OpenClaw
+- [ ] Connect OpenClaw to Ollama at `http://127.0.0.1:11434`
+- [ ] Keep Ollama bound locally rather than exposing it directly
 - [ ] Audit the existing NetBird deployment
 - [ ] Enable authenticated LAN access
 - [ ] Enable authenticated remote access
 - [ ] Add tightly scoped OpenClaw node access to lab systems
 - [ ] Keep production systems read-only until the workflow is proven
+
+## Validated model result
+
+During generation:
+
+```text
+Model:           qwen3-coder:30b
+Processor:       100% GPU
+Context:         32768 tokens
+GPU memory:      approximately 21.7 GiB used of 24.6 GiB
+GPU utilization: 90%
+GPU temperature: 47 C
+```
+
+This confirms that the selected quantized model fits entirely on the RTX 4090 without CPU or system-RAM offloading at the tested context allocation.
 
 ## Repository map
 
@@ -61,7 +82,8 @@ A documented build for running a local coding model on a dual-boot workstation a
 │   ├── 06-security-model.md
 │   ├── 07-implementation-roadmap.md
 │   ├── 08-validation-checklists.md
-│   └── 09-troubleshooting-log.md
+│   ├── 09-troubleshooting-log.md
+│   └── 10-ollama-and-model-validation.md
 ├── scripts
 │   ├── ubuntu
 │   │   ├── inventory-host.sh
@@ -72,7 +94,12 @@ A documented build for running a local coding model on a dual-boot workstation a
 └── assets
     └── screenshots
         ├── README.md
-        └── dual-boot-share-mounted.png
+        ├── dual-boot-share-mounted.webp
+        ├── permanent-ntfs-mount-test.webp
+        ├── ollama-installation.webp
+        ├── qwen3-coder-pull-complete.webp
+        ├── qwen3-coder-gpu-validation.webp
+        └── qwen3-coder-first-response.webp
 ```
 
 ## Safety rules
