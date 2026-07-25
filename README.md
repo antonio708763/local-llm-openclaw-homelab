@@ -6,7 +6,7 @@ A documented build for running a local coding model on a dual-boot workstation a
 
 - **Model:** `qwen3-coder:30b`
 - **Model runtime:** Ollama `0.32.3`
-- **Agent/orchestration layer:** OpenClaw
+- **Agent/orchestration layer:** OpenClaw `2026.7.1-2`
 - **Primary host OS:** Ubuntu
 - **Secondary OS:** Windows 10
 - **GPU:** NVIDIA RTX 4090, 24 GB VRAM
@@ -36,34 +36,100 @@ A documented build for running a local coding model on a dual-boot workstation a
 - [x] Installed and enabled Ollama `0.32.3`
 - [x] Downloaded and tested `qwen3-coder:30b`
 - [x] Confirmed the model runs with `100% GPU` residency
-- [x] Confirmed a 32,768-token context allocation
+- [x] Confirmed a 32,768-token Ollama context allocation
+- [x] Installed OpenClaw `2026.7.1-2`
+- [x] Connected OpenClaw to local Ollama at `http://127.0.0.1:11434`
+- [x] Selected `ollama/qwen3-coder:30b` as the default model
+- [x] Installed and enabled the OpenClaw Gateway as a systemd user service
+- [x] Kept the Gateway loopback-only on port `18789` with token authentication
+- [x] Confirmed the Gateway RPC probe and Ollama service are healthy
+- [x] Connected successfully through the OpenClaw TUI
 
 ### Next phases
 
 - [ ] Confirm the shared partition mounts automatically after a reboot
-- [ ] Install and configure OpenClaw
-- [ ] Connect OpenClaw to Ollama at `http://127.0.0.1:11434`
-- [ ] Keep Ollama bound locally rather than exposing it directly
+- [ ] Confirm Ollama and the OpenClaw Gateway start correctly after a reboot
+- [ ] Complete the OpenClaw identity/bootstrap conversation
+- [ ] Inspect current tool permissions and approval behavior
+- [ ] Decide which folders OpenClaw may access
+- [ ] Run one harmless local tool test
+- [ ] Reconcile the TUI's displayed `262k` token capacity with Ollama's observed 32,768-token allocation
+- [ ] Reserve a stable LAN address and configure authenticated LAN access
 - [ ] Audit the existing NetBird deployment
-- [ ] Enable authenticated LAN access
 - [ ] Enable authenticated remote access
 - [ ] Add tightly scoped OpenClaw node access to lab systems
 - [ ] Keep production systems read-only until the workflow is proven
 
-## Validated model result
+## Current local architecture
 
-During generation:
+```text
+OpenClaw TUI
+    |
+    | ws://127.0.0.1:18789
+    v
+OpenClaw Gateway
+    |
+    | http://127.0.0.1:11434
+    v
+Ollama
+    |
+    v
+qwen3-coder:30b on RTX 4090
+```
+
+Both the Gateway and Ollama are currently local-only. No LAN, NetBird, Tailscale, messaging channel, or web-search exposure has been enabled yet.
+
+## Validated model result
 
 ```text
 Model:           qwen3-coder:30b
 Processor:       100% GPU
-Context:         32768 tokens
+Ollama context:  32768 tokens
 GPU memory:      approximately 21.7 GiB used of 24.6 GiB
 GPU utilization: 90%
 GPU temperature: 47 C
 ```
 
-This confirms that the selected quantized model fits entirely on the RTX 4090 without CPU or system-RAM offloading at the tested context allocation.
+## Validated OpenClaw result
+
+```text
+OpenClaw version: 2026.7.1-2
+Provider:         Ollama, local only
+Model:            ollama/qwen3-coder:30b
+Ollama URL:       http://127.0.0.1:11434
+Gateway bind:     127.0.0.1
+Gateway port:     18789
+Gateway auth:     Token
+Gateway service:  enabled and running
+RPC read probe:   ok
+Ollama service:   active
+```
+
+## Stop and resume
+
+Before shutting down:
+
+```bash
+# Leave the TUI first with Ctrl+C.
+openclaw gateway status --require-rpc
+systemctl is-active ollama
+sudo shutdown now
+```
+
+After booting Ubuntu again:
+
+```bash
+systemctl is-active ollama
+openclaw gateway status --require-rpc
+openclaw tui
+```
+
+If the Gateway did not start:
+
+```bash
+openclaw gateway start
+openclaw tui
+```
 
 ## Repository map
 
@@ -83,7 +149,8 @@ This confirms that the selected quantized model fits entirely on the RTX 4090 wi
 │   ├── 07-implementation-roadmap.md
 │   ├── 08-validation-checklists.md
 │   ├── 09-troubleshooting-log.md
-│   └── 10-ollama-and-model-validation.md
+│   ├── 10-ollama-and-model-validation.md
+│   └── 11-openclaw-local-onboarding.md
 ├── scripts
 │   ├── ubuntu
 │   │   ├── inventory-host.sh
@@ -99,7 +166,11 @@ This confirms that the selected quantized model fits entirely on the RTX 4090 wi
         ├── ollama-installation.webp
         ├── qwen3-coder-pull-complete.webp
         ├── qwen3-coder-gpu-validation.webp
-        └── qwen3-coder-first-response.webp
+        ├── qwen3-coder-first-response.webp
+        ├── openclaw-installation.webp
+        ├── openclaw-ollama-onboarding.webp
+        ├── openclaw-tui-connected.webp
+        └── openclaw-gateway-status.webp
 ```
 
 ## Safety rules
