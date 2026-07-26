@@ -50,7 +50,7 @@
 - [x] Insecure Control UI authentication disabled
 - [x] Cautious execution policy applied
 - [x] Effective execution policy reports `security=allowlist` and `ask=on-miss`
-- [x] Temporary web/browser provider deny removed
+- [x] Normal exec host set to `sandbox`
 
 ## Docker validation
 
@@ -61,7 +61,6 @@
 - [x] `hello-world` completed successfully
 - [x] Administrator added to Docker group
 - [x] `docker ps` works without `sudo` after reboot
-- [x] Empty container list understood as expected
 
 ## OpenClaw sandbox validation
 
@@ -73,19 +72,22 @@
 - [x] Scope set to `agent`
 - [x] Workspace access set to `rw`
 - [x] Docker network set to `bridge`
-- [x] Configuration validates successfully
-- [x] Gateway restarted after configuration
 - [x] `sandbox explain` reports `runtime: sandboxed`
 - [x] Host workspace maps to `/workspace`
 - [x] `Dual_Boot_Share` is not mounted into the sandbox
-- [x] No runtime exists before the first tool request, as expected
-- [ ] Run first harmless read-only tool request
-- [ ] Confirm approval prompt appears
-- [ ] Confirm sandbox container appears in `openclaw sandbox list`
-- [ ] Confirm command runs inside the container
-- [ ] Confirm container cannot browse unrelated host paths
-- [ ] Confirm outbound DNS and HTTPS access
-- [ ] Rerun deep security audit
+- [x] First harmless tool request completed
+- [x] Sandbox container appeared automatically
+- [x] `openclaw sandbox list` reports one running runtime
+- [x] Runtime image is `openclaw-sandbox:bookworm-slim`
+- [x] Commands run as UID/GID `1000` user `sandbox`
+- [x] Container reports Debian GNU/Linux 12
+- [x] Working directory is `/workspace`
+- [x] `/home/antonio` is not visible
+- [x] Workspace file creation succeeded
+- [x] Host saw the created file at `~/.openclaw/workspace/sandbox-test.txt`
+- [x] Outbound DNS resolution succeeded
+- [x] Outbound HTTPS returned HTTP 200
+- [ ] Rerun deep security audit after web and browser setup
 
 ## Network readiness
 
