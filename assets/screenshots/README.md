@@ -18,23 +18,15 @@ Screenshots provide evidence for major milestones and preserve troubleshooting c
 - `openclaw-tui-connected.webp` — TUI connected to the main agent and main session.
 - `openclaw-gateway-status.webp` — Enabled Gateway service, active runtime, successful RPC probe, loopback listener, and active Ollama service.
 
-## Docker and sandbox
+## Docker and sandbox checkpoint
 
-- `docker-install-verified.webp` — Successful `hello-world` test, Docker Engine and Compose versions, and active service.
-- `post-reboot-services-healthy.webp` — Docker, Ollama, and OpenClaw Gateway health after reboot.
-- `sandbox-image-build.webp` — Custom Debian sandbox image build and image-size verification.
-- `sandbox-config-applied.webp` — OpenClaw sandbox settings applied, configuration validated, and Gateway restarted.
-- `sandbox-policy-explained.webp` — Effective sandbox runtime, mounts, backend, network, and tool policy.
-- `sandbox-list-empty.webp` — Expected zero-runtime checkpoint before Forge's first tool execution.
+- `docker-sandbox-checkpoint-1.webp`
+- `docker-sandbox-checkpoint-2.webp`
+
+These two images preserve the Docker installation/validation and OpenClaw sandbox-configuration checkpoint. They use neutral numbering because they were uploaded from prepared binary blobs and have not yet been relabeled after a visual review in GitHub.
+
+See `docker-sandbox-checkpoint-notes.md` for the checkpoint description.
 
 ## Image format
 
-Screenshots are stored as lossless WebP images. WebP reduces repository size while preserving terminal text and remaining directly viewable in GitHub and modern browsers.
-
-## Naming convention
-
-```text
-YYYY-MM-DD-description.webp
-```
-
-Existing names remain concise because the evidence is grouped by documented build phase.
+Screenshots are stored as WebP images. WebP reduces repository size while preserving terminal text and remaining directly viewable in GitHub and modern browsers.
