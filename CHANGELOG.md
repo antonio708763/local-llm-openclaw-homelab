@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-07-25
+
+### Added
+
+- Docker Engine installation from Docker's official Ubuntu repository.
+- Docker Compose plugin.
+- Reusable `docker/openclaw-sandbox/Dockerfile`.
+- `docs/12-docker-and-sandbox.md`.
+- Screenshot evidence for Docker installation, reboot validation, sandbox image creation, sandbox configuration, policy inspection, and the pre-runtime checkpoint.
+
+### Completed
+
+- Confirmed `Dual_Boot_Share` mounts automatically after reboot.
+- Confirmed Docker, Ollama, and the OpenClaw Gateway start correctly after reboot.
+- Created the Forge identity and operating characteristics.
+- Applied OpenClaw's cautious execution policy: `security=allowlist`, `ask=on-miss`.
+- Disabled unavailable OpenAI-backed memory search.
+- Disabled insecure Control UI authentication.
+- Removed the temporary provider-specific web/browser deny rule.
+- Corrected OpenClaw's Qwen context advertisement and Ollama `num_ctx` to `32768`.
+- Installed Docker Engine `29.6.2` and Docker Compose `v5.3.1`.
+- Successfully ran Docker's `hello-world` test.
+- Added the Ubuntu administrator account to the Docker group and verified non-root Docker access after reboot.
+- Built `openclaw-sandbox:bookworm-slim`.
+- Configured OpenClaw sandbox mode `all`, Docker backend, agent scope, read/write workspace access, and bridge networking.
+- Confirmed `openclaw sandbox explain` reports a sandboxed runtime with `/workspace` mapped to `~/.openclaw/workspace`.
+
+### Current checkpoint
+
+`openclaw sandbox list` reports zero runtimes because Forge has not executed its first tool request yet. This is expected.
+
+### Next
+
+- Run one harmless read-only command through Forge.
+- Verify approval behavior and automatic container creation.
+- Confirm command execution is isolated from the Ubuntu host.
+- Test outbound Internet connectivity from the sandbox.
+- Configure self-hosted web search and managed browser access separately.
+- Rerun the deep security audit.
+
 ## 2026-07-24
 
 ### Added
@@ -14,7 +54,6 @@
 - Detailed Ollama and `qwen3-coder:30b` validation record.
 - OpenClaw local installation and onboarding documentation.
 - Shutdown and restart commands for safely resuming the project.
-- Screenshot evidence for OpenClaw installation, local Ollama onboarding, TUI connectivity, and Gateway health.
 
 ### Completed
 
@@ -27,24 +66,5 @@
 - Confirmed `100% GPU` model residency on the RTX 4090.
 - Validated a 32,768-token Ollama context allocation with approximately 21.7 GiB of VRAM in use.
 - Installed OpenClaw `2026.7.1-2` and Node.js `24.18.0`.
-- Resolved the initial OpenClaw PATH issue by reloading `~/.bashrc`.
-- Ran `openclaw onboard --install-daemon` using QuickStart.
-- Selected Ollama in local-only mode.
-- Configured `http://127.0.0.1:11434` without `/v1`.
-- Selected `ollama/qwen3-coder:30b` as the default model.
-- Skipped messaging channels and web search during the first local validation.
-- Created the default workspace at `~/.openclaw/workspace`.
-- Installed the Gateway as an enabled systemd user service.
-- Confirmed the Gateway is loopback-only on port `18789` with token authentication.
-- Confirmed the Gateway runtime is active, the RPC read probe is healthy, and Ollama is active.
-- Connected to the main agent and main session using the OpenClaw TUI.
-
-### Next
-
-- Reboot Ubuntu and verify automatic startup of the shared mount, Ollama, and OpenClaw Gateway.
-- Complete the OpenClaw identity/bootstrap conversation.
-- Review tool permissions and keep execution approval-required.
-- Decide which local and shared folders OpenClaw may access.
-- Test one harmless local tool action.
-- Investigate why the TUI displays `262k` tokens while Ollama previously reported a 32,768-token context allocation.
-- Configure trusted LAN access only after local permissions are understood.
+- Connected OpenClaw to local Ollama.
+- Installed and validated the local Gateway and TUI.
