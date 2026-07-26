@@ -1,66 +1,21 @@
 # Local LLM + OpenClaw Homelab
 
-A documented build for running a local coding model on a dual-boot workstation and making it available to trusted LAN and remote devices.
+A documented build for running a self-hosted coding assistant on a dual-boot workstation, with future trusted LAN and encrypted remote access.
 
 ## Target system
 
+- **Agent:** Forge
 - **Model:** `qwen3-coder:30b`
 - **Model runtime:** Ollama `0.32.3`
-- **Agent/orchestration layer:** OpenClaw `2026.7.1-2`
-- **Primary host OS:** Ubuntu
-- **Secondary OS:** Windows 10
+- **Agent layer:** OpenClaw `2026.7.1-2`
+- **Host OS:** Ubuntu, dual-booted with Windows 10
 - **GPU:** NVIDIA RTX 4090, 24 GB VRAM
 - **CPU:** AMD Ryzen 9 7950X
 - **Memory:** 64 GB DDR5
-- **Storage:** Separate NVMe drives for Windows and Ubuntu
+- **Container runtime:** Docker Engine `29.6.2`
 - **Shared storage:** `Dual_Boot_Share`, NTFS, mounted at `/mnt/Dual_Boot_Share`
-- **Remote-access goal:** LAN access plus encrypted remote access
-- **Likely remote networking:** Existing self-hosted NetBird deployment, pending audit
 
-## Current project status
-
-### Completed
-
-- [x] Kept Windows and Ubuntu on separate NVMe drives
-- [x] Disabled Windows Fast Startup and hibernation
-- [x] Confirmed BitLocker is not enabled
-- [x] Backed up important Windows data to `SSD_Archive(1)`
-- [x] Repaired and verified the Windows NTFS filesystem
-- [x] Resized the Windows NTFS partition using GParted
-- [x] Created an approximately 500 GB NTFS shared partition
-- [x] Named the shared partition `Dual_Boot_Share`
-- [x] Verified Windows data integrity after the resize
-- [x] Configured and tested the Ubuntu mount at `/mnt/Dual_Boot_Share`
-- [x] Recorded the shared-partition UUID as `48003BD2003BC62A`
-- [x] Verified the NVIDIA driver and CUDA access
-- [x] Installed and enabled Ollama `0.32.3`
-- [x] Downloaded and tested `qwen3-coder:30b`
-- [x] Confirmed the model runs with `100% GPU` residency
-- [x] Confirmed a 32,768-token Ollama context allocation
-- [x] Installed OpenClaw `2026.7.1-2`
-- [x] Connected OpenClaw to local Ollama at `http://127.0.0.1:11434`
-- [x] Selected `ollama/qwen3-coder:30b` as the default model
-- [x] Installed and enabled the OpenClaw Gateway as a systemd user service
-- [x] Kept the Gateway loopback-only on port `18789` with token authentication
-- [x] Confirmed the Gateway RPC probe and Ollama service are healthy
-- [x] Connected successfully through the OpenClaw TUI
-
-### Next phases
-
-- [ ] Confirm the shared partition mounts automatically after a reboot
-- [ ] Confirm Ollama and the OpenClaw Gateway start correctly after a reboot
-- [ ] Complete the OpenClaw identity/bootstrap conversation
-- [ ] Inspect current tool permissions and approval behavior
-- [ ] Decide which folders OpenClaw may access
-- [ ] Run one harmless local tool test
-- [ ] Reconcile the TUI's displayed `262k` token capacity with Ollama's observed 32,768-token allocation
-- [ ] Reserve a stable LAN address and configure authenticated LAN access
-- [ ] Audit the existing NetBird deployment
-- [ ] Enable authenticated remote access
-- [ ] Add tightly scoped OpenClaw node access to lab systems
-- [ ] Keep production systems read-only until the workflow is proven
-
-## Current local architecture
+## Current architecture
 
 ```text
 OpenClaw TUI
@@ -75,61 +30,116 @@ Ollama
     |
     v
 qwen3-coder:30b on RTX 4090
+
+Forge tool execution
+    |
+    v
+Docker sandbox
+    |
+    +-- /workspace  <->  ~/.openclaw/workspace (read/write)
+    +-- bridge networking for outbound access
 ```
 
-Both the Gateway and Ollama are currently local-only. No LAN, NetBird, Tailscale, messaging channel, or web-search exposure has been enabled yet.
+The Gateway and Ollama remain loopback-only. No public port forwarding, LAN binding, or remote exposure has been enabled.
+
+## Completed
+
+### Storage and dual boot
+
+- [x] Kept Windows and Ubuntu on separate NVMe drives
+- [x] Backed up important Windows data
+- [x] Repaired and verified the Windows NTFS filesystem
+- [x] Resized the Windows partition safely
+- [x] Created an approximately 500 GB `Dual_Boot_Share` NTFS partition
+- [x] Mounted it permanently at `/mnt/Dual_Boot_Share`
+- [x] Confirmed the mount survives an Ubuntu reboot
+
+### Ollama and Qwen
+
+- [x] Installed and enabled Ollama `0.32.3`
+- [x] Downloaded and tested `qwen3-coder:30b`
+- [x] Confirmed `100% GPU` residency
+- [x] Validated approximately 21.7 GiB VRAM use
+- [x] Set OpenClaw and Ollama context to `32768`
+
+### OpenClaw
+
+- [x] Installed OpenClaw `2026.7.1-2`
+- [x] Connected it to `http://127.0.0.1:11434`
+- [x] Selected `ollama/qwen3-coder:30b`
+- [x] Installed the Gateway as an enabled systemd user service
+- [x] Kept the Gateway on `127.0.0.1:18789` with token authentication
+- [x] Confirmed Gateway and Ollama auto-start after reboot
+- [x] Created the Forge identity
+- [x] Disabled broken OpenAI-backed memory search for now
+- [x] Disabled insecure Control UI authentication
+- [x] Applied the cautious execution policy: allowlist with approval on miss
+- [x] Removed the temporary provider-specific web/browser deny rule
+
+### Docker sandbox
+
+- [x] Installed Docker Engine from Docker's official Ubuntu repository
+- [x] Validated Docker with `hello-world`
+- [x] Added the administrator account to the Docker group
+- [x] Confirmed Docker works without `sudo` after reboot
+- [x] Built `openclaw-sandbox:bookworm-slim`
+- [x] Enabled sandbox mode `all`
+- [x] Selected the Docker backend
+- [x] Set sandbox scope to `agent`
+- [x] Mounted the OpenClaw workspace read/write at `/workspace`
+- [x] Enabled Docker bridge networking
+- [x] Confirmed the effective session runtime is `sandboxed`
 
 ## Validated model result
 
 ```text
 Model:           qwen3-coder:30b
 Processor:       100% GPU
-Ollama context:  32768 tokens
-GPU memory:      approximately 21.7 GiB used of 24.6 GiB
+Context:         32768 tokens
+GPU memory:      approximately 21.7 GiB / 24.6 GiB
 GPU utilization: 90%
 GPU temperature: 47 C
 ```
 
-## Validated OpenClaw result
+## Validated service result
 
 ```text
-OpenClaw version: 2026.7.1-2
-Provider:         Ollama, local only
-Model:            ollama/qwen3-coder:30b
-Ollama URL:       http://127.0.0.1:11434
-Gateway bind:     127.0.0.1
-Gateway port:     18789
-Gateway auth:     Token
-Gateway service:  enabled and running
-RPC read probe:   ok
-Ollama service:   active
+Docker:          active
+Ollama:          active
+Gateway:         enabled and running
+Gateway bind:    127.0.0.1:18789
+RPC read probe:  ok
+Sandbox image:   openclaw-sandbox:bookworm-slim
+Sandbox mode:    all
+Sandbox scope:   agent
+Workspace mount: /workspace, read/write
+Network:         bridge
 ```
 
-## Stop and resume
+## Current checkpoint
 
-Before shutting down:
+The sandbox configuration is active, but no sandbox runtime has been created yet:
 
-```bash
-# Leave the TUI first with Ctrl+C.
-openclaw gateway status --require-rpc
-systemctl is-active ollama
-sudo shutdown now
+```text
+No sandbox runtimes found.
+Total: 0 (0 running)
 ```
 
-After booting Ubuntu again:
+This is expected because Forge has not yet executed its first tool request.
 
-```bash
-systemctl is-active ollama
-openclaw gateway status --require-rpc
-openclaw tui
-```
+## Next tasks
 
-If the Gateway did not start:
-
-```bash
-openclaw gateway start
-openclaw tui
-```
+1. Run one harmless read-only command through Forge.
+2. Confirm the cautious approval prompt appears.
+3. Verify the Docker sandbox container is created.
+4. Confirm commands run inside the container rather than on the Ubuntu host.
+5. Test outbound Internet access from inside the sandbox.
+6. Configure self-hosted web search, likely SearXNG.
+7. Configure the managed browser separately, because browser tools are not currently allowed by the default sandbox tool policy.
+8. Rerun `openclaw security audit --deep`.
+9. Decide whether and how to mount selected folders from `Dual_Boot_Share`.
+10. Configure authenticated trusted-LAN access.
+11. Audit NetBird for remote access.
 
 ## Repository map
 
@@ -137,8 +147,7 @@ openclaw tui
 .
 ├── README.md
 ├── CHANGELOG.md
-├── .gitignore
-├── docs
+├── docs/
 │   ├── 00-project-overview.md
 │   ├── 01-hardware-and-os-layout.md
 │   ├── 02-storage-layout.md
@@ -150,35 +159,22 @@ openclaw tui
 │   ├── 08-validation-checklists.md
 │   ├── 09-troubleshooting-log.md
 │   ├── 10-ollama-and-model-validation.md
-│   └── 11-openclaw-local-onboarding.md
-├── scripts
-│   ├── ubuntu
-│   │   ├── inventory-host.sh
-│   │   └── verify-shared-partition.sh
-│   └── windows
-│       ├── backup-user-profile.ps1
-│       └── verify-windows-volume.ps1
-└── assets
-    └── screenshots
-        ├── README.md
-        ├── dual-boot-share-mounted.webp
-        ├── permanent-ntfs-mount-test.webp
-        ├── ollama-installation.webp
-        ├── qwen3-coder-pull-complete.webp
-        ├── qwen3-coder-gpu-validation.webp
-        ├── qwen3-coder-first-response.webp
-        ├── openclaw-installation.webp
-        ├── openclaw-ollama-onboarding.webp
-        ├── openclaw-tui-connected.webp
-        └── openclaw-gateway-status.webp
+│   ├── 11-openclaw-local-onboarding.md
+│   └── 12-docker-and-sandbox.md
+├── docker/
+│   └── openclaw-sandbox/
+│       └── Dockerfile
+├── scripts/
+└── assets/screenshots/
 ```
 
 ## Safety rules
 
-1. Back up important files before changing partitions, bootloaders, model runtimes, or agent permissions.
-2. Identify drives by **size, filesystem, label, and partition layout**, not only by `/dev/nvmeXnY`; Linux device numbers can change between boots.
-3. Do not expose Ollama directly to the public Internet.
-4. Require authentication for OpenClaw LAN and remote access.
-5. Start with read-only or approval-required actions.
-6. Test infrastructure changes against lab systems before production.
-7. Keep scripts, configuration files, and change history in Git.
+1. Keep Ollama private and loopback-only.
+2. Require authentication for OpenClaw LAN and remote access.
+3. Keep command execution approval-required.
+4. Run generated commands inside a sandbox whenever practical.
+5. Do not mount production data into the sandbox by default.
+6. Test infrastructure changes against lab systems first.
+7. Do not commit tokens, API keys, or `openclaw.json` secrets.
+8. Keep documentation and change history in Git.
