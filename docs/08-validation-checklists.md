@@ -46,11 +46,20 @@
 - [x] Gateway runtime active and RPC probe `ok`
 - [x] Ollama and Gateway auto-start confirmed after reboot
 - [x] Forge identity completed
-- [x] Memory search disabled until a local provider is configured
+- [x] Semantic memory search disabled until a local provider is configured
 - [x] Insecure Control UI authentication disabled
 - [x] Cautious execution policy applied
 - [x] Effective execution policy reports `security=allowlist` and `ask=on-miss`
 - [x] Normal exec host set to `sandbox`
+- [x] Compaction reserve set to `8192`
+- [x] Compaction reserve floor set to `8192`
+- [x] Recent-token retention set to `6000`
+- [x] Configuration validates after compaction tuning
+- [x] Detailed context breakdown inspected
+- [x] `MEMORY.md` created and verified from Ubuntu
+- [x] Dated memory note created and verified from Ubuntu
+- [x] Current project checkpoint added to durable memory
+- [x] Fresh session recalled durable goals, environment, and safety rules
 
 ## Docker validation
 
@@ -87,12 +96,28 @@
 - [x] Host saw the created file at `~/.openclaw/workspace/sandbox-test.txt`
 - [x] Outbound DNS resolution succeeded
 - [x] Outbound HTTPS returned HTTP 200
-- [ ] Rerun deep security audit after web and browser setup
+
+## Self-hosted search validation
+
+- [x] OpenClaw SearXNG plugin installed
+- [x] SearXNG container created with `--restart unless-stopped`
+- [x] SearXNG published only on `127.0.0.1:8888`
+- [x] HTML interface reachable locally
+- [x] Persistent configuration mounted read-only from `~/searxng/settings.yml`
+- [x] JSON output enabled
+- [x] JSON search request returned results
+- [x] OpenClaw search provider set to `searxng`
+- [x] Plugin base URL set to `http://127.0.0.1:8888`
+- [x] `web_search` and `web_fetch` added to sandbox tool policy
+- [x] Fresh OpenClaw session exposed the `web_search` tool
+- [x] Forge identified SearXNG as the provider
+- [x] SearXNG container healthy at the stopping point
 
 ## Network readiness
 
-- [ ] Self-hosted SearXNG configured
+- [x] Self-hosted SearXNG configured
 - [ ] Managed browser configured with deliberate permissions
+- [ ] Deep security audit rerun after browser setup
 - [ ] Stable LAN address reserved
 - [ ] Trusted LAN access configured
 - [ ] Guest and IoT isolation verified
