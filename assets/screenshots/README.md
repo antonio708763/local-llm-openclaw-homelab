@@ -23,10 +23,22 @@ Screenshots provide evidence for major milestones and preserve troubleshooting c
 - `docker-sandbox-checkpoint-1.webp`
 - `docker-sandbox-checkpoint-2.webp`
 
-These two images preserve the Docker installation/validation and OpenClaw sandbox-configuration checkpoint. They use neutral numbering because they were uploaded from prepared binary blobs and have not yet been relabeled after a visual review in GitHub.
+These images preserve the Docker installation and sandbox-configuration checkpoint. See `docker-sandbox-checkpoint-notes.md` for details.
 
-See `docker-sandbox-checkpoint-notes.md` for the checkpoint description.
+## Sandbox runtime validation
+
+The runtime validation is documented in `docs/13-sandbox-runtime-validation.md` and covers:
+
+- `host=sandbox` execution policy
+- first harmless command execution
+- automatic sandbox-container creation
+- Debian 12 and unprivileged `sandbox` user validation
+- host-home isolation
+- workspace write persistence
+- DNS resolution and outbound HTTPS
+
+The newest terminal captures remain available in the project conversation but were not added as repository image files during this text-documentation checkpoint.
 
 ## Image format
 
-Screenshots are stored as WebP images. WebP reduces repository size while preserving terminal text and remaining directly viewable in GitHub and modern browsers.
+Screenshots stored in the repository use WebP. WebP reduces repository size while preserving terminal text and remaining directly viewable in GitHub and modern browsers.
