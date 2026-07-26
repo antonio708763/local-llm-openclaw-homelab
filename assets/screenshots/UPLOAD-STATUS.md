@@ -1,0 +1,1 @@
+The Docker and sandbox documentation is complete. Binary WebP screenshots are being attached through the Git data API in the final image commit.
