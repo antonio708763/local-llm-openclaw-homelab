@@ -2,6 +2,16 @@
 
 ## 2026-07-26
 
+### Added
+
+- `docs/13-sandbox-runtime-validation.md`.
+- `docs/14-searxng-compaction-and-memory.md`.
+- Self-hosted SearXNG container bound to `127.0.0.1:8888`.
+- Persistent SearXNG configuration at `~/searxng/settings.yml` with HTML and JSON output enabled.
+- OpenClaw SearXNG plugin and local `web_search` integration.
+- Durable `MEMORY.md` and dated memory-note workflow.
+- Current project checkpoint in `MEMORY.md`.
+
 ### Completed
 
 - Changed normal OpenClaw command execution from `host=gateway` to `host=sandbox`.
@@ -14,17 +24,22 @@
 - Confirmed `/home/antonio` is not visible from inside the sandbox.
 - Created `/workspace/sandbox-test.txt` from Forge.
 - Confirmed the file appeared on Ubuntu at `~/.openclaw/workspace/sandbox-test.txt`.
-- Confirmed outbound DNS resolution from the sandbox.
-- Confirmed outbound HTTPS access with an HTTP 200 response from `https://example.com`.
-
-### Added
-
-- `docs/13-sandbox-runtime-validation.md`.
-- Screenshot evidence for the sandbox execution policy, first runtime test, running container, workspace persistence, and Internet connectivity.
+- Confirmed outbound DNS resolution and HTTPS access from the sandbox.
+- Installed the OpenClaw SearXNG plugin.
+- Deployed SearXNG in Docker with loopback-only port publishing.
+- Resolved the initial JSON search `403` by enabling `search.formats: [html, json]`.
+- Added `web_search` and `web_fetch` to the sandbox tool allowlist.
+- Confirmed OpenClaw can search through the self-hosted SearXNG provider in a fresh session.
+- Tuned compaction for the 32,768-token context using an 8,192-token reserve and 6,000 recent tokens.
+- Inspected the detailed context breakdown and recorded approximately 8,929 tokens of startup context.
+- Created and verified `MEMORY.md` and `memory/2026-07-26.md` from Ubuntu.
+- Confirmed a new session recalled the durable homelab goals, hardware, model, and safety rules.
+- Added the managed-browser task to the durable current-project checkpoint.
+- Confirmed Docker, Ollama, the OpenClaw Gateway, and SearXNG were healthy at the stopping point.
 
 ### Current checkpoint
 
-The Docker sandbox is now validated for command execution, host isolation, workspace persistence, DNS, and HTTPS. The next phase is self-hosted web search using SearXNG, followed by separate managed-browser configuration.
+The self-hosted search, compaction, and durable-memory milestone is complete. The next task is to configure and test an isolated OpenClaw managed browser that remains separate from the personal browser profile.
 
 ## 2026-07-25
 
