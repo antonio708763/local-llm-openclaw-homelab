@@ -49,12 +49,15 @@ Status: **Complete**
 - [x] Complete Forge's identity/bootstrap conversation
 - [x] Apply cautious command execution policy
 - [x] Set normal execution host to `sandbox`
-- [x] Disable broken OpenAI-backed memory search
+- [x] Disable broken OpenAI-backed semantic memory search
 - [x] Disable insecure Control UI authentication
+- [x] Tune compaction for the 32,768-token context
+- [x] Create durable memory files
+- [x] Verify durable memory across a fresh session
 
 ## Phase 4 — Docker sandbox
 
-Status: **Runtime validation complete**
+Status: **Complete**
 
 - [x] Install Docker Engine from Docker's official Ubuntu repository
 - [x] Install Docker Compose plugin
@@ -75,21 +78,25 @@ Status: **Runtime validation complete**
 - [x] Verify workspace writes persist to the host workspace
 - [x] Verify outbound DNS resolution
 - [x] Verify outbound HTTPS access
-- [ ] Rerun `openclaw security audit --deep` after web and browser configuration
 
 ## Phase 5 — Web research and managed browser
 
-Status: **Next**
+Status: **Web search complete; managed browser next**
 
-- [ ] Deploy a self-hosted SearXNG instance
-- [ ] Enable SearXNG JSON search output
-- [ ] Configure OpenClaw web search to use SearXNG
-- [ ] Decide which upstream search engines SearXNG may query
-- [ ] Test current-information retrieval
+- [x] Install the OpenClaw SearXNG plugin
+- [x] Deploy a self-hosted SearXNG instance
+- [x] Bind SearXNG to `127.0.0.1:8888`
+- [x] Persist SearXNG configuration outside the container
+- [x] Enable SearXNG JSON search output
+- [x] Configure OpenClaw web search to use SearXNG
+- [x] Add `web_search` and `web_fetch` to the sandbox allowlist
+- [x] Test current-information retrieval in a fresh session
+- [ ] Review and deliberately select SearXNG upstream engines
 - [ ] Configure OpenClaw's managed browser separately
 - [ ] Explicitly allow only the browser capabilities needed
 - [ ] Keep the managed browser separate from the personal browser profile
 - [ ] Review sandbox and browser isolation
+- [ ] Rerun `openclaw security audit --deep`
 
 ## Phase 6 — Controlled filesystem access
 
