@@ -1,1 +1,0 @@
-Documentation updated through the Docker sandbox configuration checkpoint.

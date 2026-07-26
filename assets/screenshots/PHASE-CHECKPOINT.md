@@ -1,1 +1,0 @@
-Docker and OpenClaw sandbox phase documented on 2026-07-25.

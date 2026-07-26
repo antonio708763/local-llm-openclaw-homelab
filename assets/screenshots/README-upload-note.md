@@ -1,1 +1,0 @@
-See `docker-sandbox-checkpoint-notes.md` for the binary screenshot checkpoint.
