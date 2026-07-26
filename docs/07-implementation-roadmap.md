@@ -33,16 +33,6 @@ Status: **Complete**
 - [x] Confirm `100% GPU` residency
 - [x] Align OpenClaw context and Ollama `num_ctx` at `32768`
 
-Validated result:
-
-```text
-Processor:       100% GPU
-Context:         32768
-VRAM:            21733 MiB / 24564 MiB
-GPU utilization: 90%
-Temperature:     47 C
-```
-
 ## Phase 3 — OpenClaw local setup
 
 Status: **Complete**
@@ -58,45 +48,47 @@ Status: **Complete**
 - [x] Confirm Gateway and Ollama auto-start after reboot
 - [x] Complete Forge's identity/bootstrap conversation
 - [x] Apply cautious command execution policy
+- [x] Set normal execution host to `sandbox`
 - [x] Disable broken OpenAI-backed memory search
 - [x] Disable insecure Control UI authentication
-- [x] Keep web and browser capability available for later controlled configuration
 
 ## Phase 4 — Docker sandbox
 
-Status: **Configured; first runtime test next**
+Status: **Runtime validation complete**
 
 - [x] Install Docker Engine from Docker's official Ubuntu repository
 - [x] Install Docker Compose plugin
 - [x] Validate with `hello-world`
 - [x] Add the administrator account to the Docker group
 - [x] Reboot and verify non-root Docker access
-- [x] Confirm Docker, Ollama, and Gateway are healthy after reboot
 - [x] Build `openclaw-sandbox:bookworm-slim`
 - [x] Configure sandbox mode `all`
-- [x] Configure Docker backend
-- [x] Configure agent scope
+- [x] Configure Docker backend and agent scope
 - [x] Configure read/write workspace access
 - [x] Configure bridge networking
 - [x] Confirm effective runtime reports `sandboxed`
-- [x] Confirm only `~/.openclaw/workspace` is mounted as `/workspace`
-- [ ] Run the first harmless tool command
-- [ ] Confirm approval-on-miss behavior
-- [ ] Confirm the container is created automatically
-- [ ] Verify host isolation
-- [ ] Verify outbound Internet access
-- [ ] Rerun `openclaw security audit --deep`
+- [x] Run the first harmless tool command
+- [x] Confirm the container is created automatically
+- [x] Confirm commands run as unprivileged user `sandbox`
+- [x] Confirm container OS is Debian 12
+- [x] Verify `/home/antonio` is not visible
+- [x] Verify workspace writes persist to the host workspace
+- [x] Verify outbound DNS resolution
+- [x] Verify outbound HTTPS access
+- [ ] Rerun `openclaw security audit --deep` after web and browser configuration
 
 ## Phase 5 — Web research and managed browser
 
-Status: **Not started**
+Status: **Next**
 
 - [ ] Deploy a self-hosted SearXNG instance
+- [ ] Enable SearXNG JSON search output
 - [ ] Configure OpenClaw web search to use SearXNG
-- [ ] Decide which search engines SearXNG may query
+- [ ] Decide which upstream search engines SearXNG may query
+- [ ] Test current-information retrieval
 - [ ] Configure OpenClaw's managed browser separately
 - [ ] Explicitly allow only the browser capabilities needed
-- [ ] Test search and browser navigation from an untrusted prompt
+- [ ] Keep the managed browser separate from the personal browser profile
 - [ ] Review sandbox and browser isolation
 
 ## Phase 6 — Controlled filesystem access
