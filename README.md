@@ -13,6 +13,7 @@ A documented build for running a self-hosted coding assistant on a dual-boot wor
 - **CPU:** AMD Ryzen 9 7950X
 - **Memory:** 64 GB DDR5
 - **Container runtime:** Docker Engine `29.6.2`
+- **Search service:** self-hosted SearXNG on `127.0.0.1:8888`
 - **Shared storage:** `Dual_Boot_Share`, NTFS, mounted at `/mnt/Dual_Boot_Share`
 
 ## Current architecture
@@ -24,9 +25,9 @@ OpenClaw TUI
     v
 OpenClaw Gateway
     |
-    | http://127.0.0.1:11434
-    v
-Ollama -> qwen3-coder:30b -> RTX 4090
+    +-- http://127.0.0.1:11434 --> Ollama --> qwen3-coder:30b --> RTX 4090
+    |
+    `-- web_search --> SearXNG on 127.0.0.1:8888 --> upstream search engines
 
 Forge tool execution
     |
@@ -39,7 +40,7 @@ Docker sandbox
     `-- Ubuntu host home and Dual_Boot_Share are not mounted
 ```
 
-The Gateway and Ollama remain loopback-only. No public port forwarding, LAN binding, remote exposure, or sandbox access to `Dual_Boot_Share` has been enabled.
+The Gateway, Ollama, and SearXNG remain loopback-only. No public port forwarding, LAN binding, remote exposure, or sandbox access to `Dual_Boot_Share` has been enabled.
 
 ## Completed
 
@@ -70,10 +71,13 @@ The Gateway and Ollama remain loopback-only. No public port forwarding, LAN bind
 - [x] Kept the Gateway on `127.0.0.1:18789` with token authentication
 - [x] Confirmed Gateway and Ollama auto-start after reboot
 - [x] Created the Forge identity
-- [x] Disabled broken OpenAI-backed memory search for now
+- [x] Disabled broken OpenAI-backed semantic memory search for now
 - [x] Disabled insecure Control UI authentication
 - [x] Applied the cautious execution policy
 - [x] Set normal command execution to `host=sandbox`
+- [x] Tuned compaction for the 32,768-token model
+- [x] Created and verified durable `MEMORY.md` and dated memory notes
+- [x] Confirmed durable memory is available in a fresh session
 
 ### Docker sandbox
 
@@ -89,6 +93,17 @@ The Gateway and Ollama remain loopback-only. No public port forwarding, LAN bind
 - [x] Confirmed writes in `/workspace` persist to `~/.openclaw/workspace`
 - [x] Confirmed outbound DNS resolution and HTTPS access
 
+### Self-hosted web search
+
+- [x] Installed the OpenClaw SearXNG plugin
+- [x] Deployed SearXNG as a Docker container
+- [x] Bound SearXNG only to `127.0.0.1:8888`
+- [x] Persisted SearXNG configuration at `~/searxng/settings.yml`
+- [x] Enabled HTML and JSON search output
+- [x] Added `web_search` and `web_fetch` to the sandbox tool allowlist
+- [x] Connected OpenClaw `web_search` to the local SearXNG service
+- [x] Completed a successful fresh-session web search test
+
 ## Validated results
 
 ```text
@@ -102,26 +117,32 @@ Exec host:          sandbox
 Exec security:      allowlist
 Exec approval:      ask-on-miss
 Sandbox image:      openclaw-sandbox:bookworm-slim
-Sandbox container:  openclaw-sbx-agent-main-...
 Sandbox user:       sandbox, UID 1000
 Sandbox OS:         Debian GNU/Linux 12
 Workspace mount:    /workspace, read/write
 Host home visible:  no
 DNS:                working
 Outbound HTTPS:     working
+SearXNG bind:        127.0.0.1:8888
+SearXNG JSON API:    working
+OpenClaw web_search: working through SearXNG
+Compaction reserve: 8192 tokens
+Recent-token keep:  6000 tokens
+Durable memory:     verified across sessions
 ```
 
-The test file created inside the container at `/workspace/sandbox-test.txt` appeared on Ubuntu at `~/.openclaw/workspace/sandbox-test.txt`, confirming the bind-mounted workspace behaves correctly.
+## Current checkpoint
+
+The self-hosted search and durable-memory phase is complete. Docker, Ollama, the OpenClaw Gateway, and SearXNG were all healthy at the stopping point. `MEMORY.md` records the current project state and identifies the next task.
 
 ## Next tasks
 
-1. Deploy a self-hosted SearXNG instance.
-2. Configure OpenClaw web search to use SearXNG.
-3. Configure the managed browser separately because the sandbox policy currently denies the browser tool.
-4. Rerun `openclaw security audit --deep` after web and browser configuration.
-5. Decide whether and how to mount selected `Dual_Boot_Share` folders.
-6. Configure authenticated trusted-LAN access.
-7. Audit NetBird for remote access.
+1. Configure and test the isolated OpenClaw managed browser.
+2. Keep the managed browser separate from the personal browser profile.
+3. Rerun `openclaw security audit --deep` after browser configuration.
+4. Decide whether and how to mount selected `Dual_Boot_Share` folders.
+5. Configure authenticated trusted-LAN access.
+6. Audit NetBird for remote access.
 
 ## Repository map
 
@@ -143,7 +164,8 @@ The test file created inside the container at `/workspace/sandbox-test.txt` appe
 │   ├── 10-ollama-and-model-validation.md
 │   ├── 11-openclaw-local-onboarding.md
 │   ├── 12-docker-and-sandbox.md
-│   └── 13-sandbox-runtime-validation.md
+│   ├── 13-sandbox-runtime-validation.md
+│   └── 14-searxng-compaction-and-memory.md
 ├── docker/
 │   └── openclaw-sandbox/
 │       └── Dockerfile
@@ -153,11 +175,12 @@ The test file created inside the container at `/workspace/sandbox-test.txt` appe
 
 ## Safety rules
 
-1. Keep Ollama private and loopback-only.
+1. Keep Ollama, SearXNG, and the Gateway private and loopback-only until authenticated access is deliberately configured.
 2. Require authentication for OpenClaw LAN and remote access.
 3. Keep command execution approval-controlled.
 4. Run generated commands inside a sandbox whenever practical.
 5. Do not mount production data into the sandbox by default.
-6. Test infrastructure changes against lab systems first.
-7. Do not commit tokens, API keys, or `openclaw.json` secrets.
-8. Keep documentation and change history in Git.
+6. Keep the managed browser separate from personal browser profiles and credentials.
+7. Test infrastructure changes against lab systems first.
+8. Do not commit tokens, API keys, SearXNG secret keys, or `openclaw.json` secrets.
+9. Keep documentation and change history in Git.
