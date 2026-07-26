@@ -26,21 +26,20 @@ OpenClaw Gateway
     |
     | http://127.0.0.1:11434
     v
-Ollama
-    |
-    v
-qwen3-coder:30b on RTX 4090
+Ollama -> qwen3-coder:30b -> RTX 4090
 
 Forge tool execution
     |
     v
 Docker sandbox
-    |
-    +-- /workspace  <->  ~/.openclaw/workspace (read/write)
-    +-- bridge networking for outbound access
+    +-- user: sandbox, UID 1000
+    +-- Debian 12
+    +-- /workspace <-> ~/.openclaw/workspace (read/write)
+    +-- bridge networking for outbound DNS and HTTPS
+    `-- Ubuntu host home and Dual_Boot_Share are not mounted
 ```
 
-The Gateway and Ollama remain loopback-only. No public port forwarding, LAN binding, or remote exposure has been enabled.
+The Gateway and Ollama remain loopback-only. No public port forwarding, LAN binding, remote exposure, or sandbox access to `Dual_Boot_Share` has been enabled.
 
 ## Completed
 
@@ -73,73 +72,56 @@ The Gateway and Ollama remain loopback-only. No public port forwarding, LAN bind
 - [x] Created the Forge identity
 - [x] Disabled broken OpenAI-backed memory search for now
 - [x] Disabled insecure Control UI authentication
-- [x] Applied the cautious execution policy: allowlist with approval on miss
-- [x] Removed the temporary provider-specific web/browser deny rule
+- [x] Applied the cautious execution policy
+- [x] Set normal command execution to `host=sandbox`
 
 ### Docker sandbox
 
 - [x] Installed Docker Engine from Docker's official Ubuntu repository
 - [x] Validated Docker with `hello-world`
-- [x] Added the administrator account to the Docker group
-- [x] Confirmed Docker works without `sudo` after reboot
 - [x] Built `openclaw-sandbox:bookworm-slim`
-- [x] Enabled sandbox mode `all`
-- [x] Selected the Docker backend
-- [x] Set sandbox scope to `agent`
+- [x] Enabled sandbox mode `all`, Docker backend, and agent scope
 - [x] Mounted the OpenClaw workspace read/write at `/workspace`
 - [x] Enabled Docker bridge networking
-- [x] Confirmed the effective session runtime is `sandboxed`
+- [x] Confirmed the first Forge tool request automatically created a sandbox runtime
+- [x] Confirmed commands run as the unprivileged `sandbox` user on Debian 12
+- [x] Confirmed `/home/antonio` is not visible inside the sandbox
+- [x] Confirmed writes in `/workspace` persist to `~/.openclaw/workspace`
+- [x] Confirmed outbound DNS resolution and HTTPS access
 
-## Validated model result
-
-```text
-Model:           qwen3-coder:30b
-Processor:       100% GPU
-Context:         32768 tokens
-GPU memory:      approximately 21.7 GiB / 24.6 GiB
-GPU utilization: 90%
-GPU temperature: 47 C
-```
-
-## Validated service result
+## Validated results
 
 ```text
-Docker:          active
-Ollama:          active
-Gateway:         enabled and running
-Gateway bind:    127.0.0.1:18789
-RPC read probe:  ok
-Sandbox image:   openclaw-sandbox:bookworm-slim
-Sandbox mode:    all
-Sandbox scope:   agent
-Workspace mount: /workspace, read/write
-Network:         bridge
+Model:              qwen3-coder:30b
+Processor:          100% GPU
+Context:            32768 tokens
+GPU memory:         approximately 21.7 GiB / 24.6 GiB
+Gateway bind:       127.0.0.1:18789
+Gateway RPC probe:  ok
+Exec host:          sandbox
+Exec security:      allowlist
+Exec approval:      ask-on-miss
+Sandbox image:      openclaw-sandbox:bookworm-slim
+Sandbox container:  openclaw-sbx-agent-main-...
+Sandbox user:       sandbox, UID 1000
+Sandbox OS:         Debian GNU/Linux 12
+Workspace mount:    /workspace, read/write
+Host home visible:  no
+DNS:                working
+Outbound HTTPS:     working
 ```
 
-## Current checkpoint
-
-The sandbox configuration is active, but no sandbox runtime has been created yet:
-
-```text
-No sandbox runtimes found.
-Total: 0 (0 running)
-```
-
-This is expected because Forge has not yet executed its first tool request.
+The test file created inside the container at `/workspace/sandbox-test.txt` appeared on Ubuntu at `~/.openclaw/workspace/sandbox-test.txt`, confirming the bind-mounted workspace behaves correctly.
 
 ## Next tasks
 
-1. Run one harmless read-only command through Forge.
-2. Confirm the cautious approval prompt appears.
-3. Verify the Docker sandbox container is created.
-4. Confirm commands run inside the container rather than on the Ubuntu host.
-5. Test outbound Internet access from inside the sandbox.
-6. Configure self-hosted web search, likely SearXNG.
-7. Configure the managed browser separately, because browser tools are not currently allowed by the default sandbox tool policy.
-8. Rerun `openclaw security audit --deep`.
-9. Decide whether and how to mount selected folders from `Dual_Boot_Share`.
-10. Configure authenticated trusted-LAN access.
-11. Audit NetBird for remote access.
+1. Deploy a self-hosted SearXNG instance.
+2. Configure OpenClaw web search to use SearXNG.
+3. Configure the managed browser separately because the sandbox policy currently denies the browser tool.
+4. Rerun `openclaw security audit --deep` after web and browser configuration.
+5. Decide whether and how to mount selected `Dual_Boot_Share` folders.
+6. Configure authenticated trusted-LAN access.
+7. Audit NetBird for remote access.
 
 ## Repository map
 
@@ -160,7 +142,8 @@ This is expected because Forge has not yet executed its first tool request.
 │   ├── 09-troubleshooting-log.md
 │   ├── 10-ollama-and-model-validation.md
 │   ├── 11-openclaw-local-onboarding.md
-│   └── 12-docker-and-sandbox.md
+│   ├── 12-docker-and-sandbox.md
+│   └── 13-sandbox-runtime-validation.md
 ├── docker/
 │   └── openclaw-sandbox/
 │       └── Dockerfile
@@ -172,7 +155,7 @@ This is expected because Forge has not yet executed its first tool request.
 
 1. Keep Ollama private and loopback-only.
 2. Require authentication for OpenClaw LAN and remote access.
-3. Keep command execution approval-required.
+3. Keep command execution approval-controlled.
 4. Run generated commands inside a sandbox whenever practical.
 5. Do not mount production data into the sandbox by default.
 6. Test infrastructure changes against lab systems first.
