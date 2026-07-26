@@ -1,0 +1,1 @@
+Binary screenshots are tracked separately from the documentation index.
