@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-07-26
+
+### Completed
+
+- Changed normal OpenClaw command execution from `host=gateway` to `host=sandbox`.
+- Preserved the cautious policy with `security=allowlist`, `ask=on-miss`, and deny fallback.
+- Ran Forge's first harmless command set inside the Docker sandbox.
+- Confirmed OpenClaw automatically created and started an `openclaw-sbx-agent-main-...` runtime.
+- Confirmed the runtime uses `openclaw-sandbox:bookworm-slim`.
+- Confirmed commands run as the unprivileged `sandbox` user with UID and GID `1000`.
+- Confirmed the working directory is `/workspace` and the container OS is Debian GNU/Linux 12.
+- Confirmed `/home/antonio` is not visible from inside the sandbox.
+- Created `/workspace/sandbox-test.txt` from Forge.
+- Confirmed the file appeared on Ubuntu at `~/.openclaw/workspace/sandbox-test.txt`.
+- Confirmed outbound DNS resolution from the sandbox.
+- Confirmed outbound HTTPS access with an HTTP 200 response from `https://example.com`.
+
+### Added
+
+- `docs/13-sandbox-runtime-validation.md`.
+- Screenshot evidence for the sandbox execution policy, first runtime test, running container, workspace persistence, and Internet connectivity.
+
+### Current checkpoint
+
+The Docker sandbox is now validated for command execution, host isolation, workspace persistence, DNS, and HTTPS. The next phase is self-hosted web search using SearXNG, followed by separate managed-browser configuration.
+
 ## 2026-07-25
 
 ### Added
@@ -26,19 +52,6 @@
 - Built `openclaw-sandbox:bookworm-slim`.
 - Configured OpenClaw sandbox mode `all`, Docker backend, agent scope, read/write workspace access, and bridge networking.
 - Confirmed `openclaw sandbox explain` reports a sandboxed runtime with `/workspace` mapped to `~/.openclaw/workspace`.
-
-### Current checkpoint
-
-`openclaw sandbox list` reports zero runtimes because Forge has not executed its first tool request yet. This is expected.
-
-### Next
-
-- Run one harmless read-only command through Forge.
-- Verify approval behavior and automatic container creation.
-- Confirm command execution is isolated from the Ubuntu host.
-- Test outbound Internet connectivity from the sandbox.
-- Configure self-hosted web search and managed browser access separately.
-- Rerun the deep security audit.
 
 ## 2026-07-24
 
