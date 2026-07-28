@@ -60,8 +60,9 @@
 - [x] Dated memory note created and verified from Ubuntu
 - [x] Current project checkpoint added to durable memory
 - [x] Fresh session recalled durable goals, environment, and safety rules
-- [ ] Update durable memory with the completed managed-browser milestone
-- [ ] Create and verify `memory/2026-07-28.md`
+- [x] Durable memory updated with the managed-browser milestone
+- [x] `memory/2026-07-28.md` created and verified
+- [x] Durable memory updated with the controlled-share milestone
 
 ## Docker validation
 
@@ -85,7 +86,6 @@
 - [x] Docker network set to `bridge`
 - [x] `sandbox explain` reports `runtime: sandboxed`
 - [x] Host workspace maps to `/workspace`
-- [x] `Dual_Boot_Share` is not mounted into the sandbox
 - [x] First harmless tool request completed
 - [x] Sandbox container appeared automatically
 - [x] `openclaw sandbox list` reports one running runtime
@@ -98,6 +98,33 @@
 - [x] Host saw the created file at `~/.openclaw/workspace/sandbox-test.txt`
 - [x] Outbound DNS resolution succeeded
 - [x] Outbound HTTPS returned HTTP 200
+
+## Controlled shared-folder validation
+
+- [x] Created `/mnt/Dual_Boot_Share/Forge_Shared`
+- [x] Confirmed the parent NTFS partition is mounted read/write with `ntfs3`
+- [x] Created and read `host-created.txt` from Ubuntu
+- [x] Enabled `dangerouslyAllowExternalBindSources` deliberately
+- [x] Command bind set exactly to `/mnt/Dual_Boot_Share/Forge_Shared:/forge-share:rw`
+- [x] Browser bind list explicitly set to `[]`
+- [x] Configuration validated after bind changes
+- [x] Existing command sandbox removed and recreated on next use
+- [x] Existing browser sandbox removed and recreated on next use
+- [x] Forge read `/forge-share/host-created.txt`
+- [x] Forge created `/forge-share/forge-created.txt`
+- [x] Ubuntu confirmed `forge-created.txt` on the NTFS partition
+- [x] Forge reported `PASS_ENTIRE_SHARE_HIDDEN`
+- [x] Forge reported `PASS_HOST_HOME_HIDDEN`
+- [x] Command-container mounts inspected directly
+- [x] Command container has `/forge-share` read/write
+- [x] Command container does not mount the entire `Dual_Boot_Share`
+- [x] Browser-container mounts inspected directly
+- [x] Browser container has no `/forge-share` mount
+- [x] Browser container has no `Dual_Boot_Share` mount
+- [x] Direct browser-container test reported `PASS: browser cannot see Forge_Shared`
+- [x] Direct browser-container test reported `PASS: browser cannot see Dual_Boot_Share`
+- [x] Managed browser still opened `https://example.com` successfully
+- [x] Rollback commands documented
 
 ## Self-hosted search validation
 
@@ -163,7 +190,9 @@
 - [x] Browser use restricted away from banking, personal email, password managers, and sensitive administration
 - [x] Web content designated as untrusted input
 
-## Local evidence bundle
+## Local evidence bundles
+
+### Managed browser
 
 - [x] `browser-config.json` created
 - [x] `browser-image.txt` created
@@ -171,6 +200,18 @@
 - [x] `sandbox-tool-policy.json` created
 - [x] `searxng-plugin.json` created
 - [x] `security-audit.txt` created
+
+### Controlled share
+
+- [x] `browser-binds.json` created
+- [x] `browser-container-mounts.txt` created
+- [x] `command-binds.json` created
+- [x] `command-container-mounts.txt` created
+- [x] `host-verification.txt` created
+- [x] `partition-mount.txt` created
+
+### Evidence review
+
 - [ ] Review every file for secrets before any public commit
 - [ ] Commit only safe selected evidence artifacts
 
@@ -179,6 +220,8 @@
 - [x] Self-hosted SearXNG configured
 - [x] Managed browser configured with deliberate permissions
 - [x] Deep security audit rerun after browser setup
+- [x] Controlled shared-folder access configured and validated
+- [ ] Current network and firewall state inventoried
 - [ ] Stable LAN address reserved
 - [ ] Trusted LAN access configured
 - [ ] Guest and IoT isolation verified
