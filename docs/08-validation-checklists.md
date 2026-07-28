@@ -60,6 +60,8 @@
 - [x] Dated memory note created and verified from Ubuntu
 - [x] Current project checkpoint added to durable memory
 - [x] Fresh session recalled durable goals, environment, and safety rules
+- [ ] Update durable memory with the completed managed-browser milestone
+- [ ] Create and verify `memory/2026-07-28.md`
 
 ## Docker validation
 
@@ -71,7 +73,7 @@
 - [x] Administrator added to Docker group
 - [x] `docker ps` works without `sudo` after reboot
 
-## OpenClaw sandbox validation
+## OpenClaw command-sandbox validation
 
 - [x] Image `openclaw-sandbox:bookworm-slim` built
 - [x] Image includes Bash, curl, Git, jq, Python 3, ripgrep, and CA certificates
@@ -112,12 +114,71 @@
 - [x] Fresh OpenClaw session exposed the `web_search` tool
 - [x] Forge identified SearXNG as the provider
 - [x] SearXNG container healthy at the stopping point
+- [x] Plugin pinned to `@openclaw/searxng-plugin@2026.7.1`
+- [x] Runtime inspection reports the exact pinned install specification
+
+## Managed-browser validation
+
+- [x] Browser plugin enabled
+- [x] Browser control endpoint reachable
+- [x] Matching OpenClaw source tag identified as `v2026.7.1`
+- [x] Image `openclaw-sandbox-browser:bookworm-slim` built successfully
+- [x] Browser sandbox enabled
+- [x] Browser auto-start enabled
+- [x] Browser image configured explicitly
+- [x] Dedicated network configured as `openclaw-sandbox-browser`
+- [x] Host-browser control disabled
+- [x] noVNC enabled
+- [x] `browser` added to global tool policy
+- [x] `browser` added to sandbox tool policy
+- [x] Configuration validated after browser changes
+- [x] Gateway restarted after browser changes
+- [x] Fresh session received the browser tool
+- [x] Browser container created automatically
+- [x] Browser container reports running status
+- [x] Browser container uses `openclaw-sandbox-browser:bookworm-slim`
+- [x] Browser container uses the dedicated network
+- [x] `https://example.com` opened successfully
+- [x] Final URL confirmed
+- [x] Page title confirmed as `Example Domain`
+- [x] Main heading confirmed as `Example Domain`
+- [x] Browser snapshot completed
+- [x] Browser screenshot completed
+- [x] Screenshot files located under `~/.openclaw/media`
+- [x] Browser mounts inspected
+- [x] Personal Chrome profile not mounted
+- [x] Personal Chromium profile not mounted
+- [x] Personal Firefox profile not mounted
+- [x] No credential or password-manager directory observed
+- [x] `Dual_Boot_Share` not mounted into the browser container
+
+## Security-audit validation
+
+- [x] Deep audit rerun after browser configuration
+- [x] Unpinned SearXNG warning resolved
+- [x] Small-model-with-web-tools finding documented
+- [x] Small-model finding accepted as residual risk for the current single-user sandboxed lab
+- [x] Trusted-proxies warning reviewed
+- [x] No trusted-proxy change made while the Gateway remains loopback-only
+- [x] Browser use restricted away from banking, personal email, password managers, and sensitive administration
+- [x] Web content designated as untrusted input
+
+## Local evidence bundle
+
+- [x] `browser-config.json` created
+- [x] `browser-image.txt` created
+- [x] `browser-runtime.txt` created
+- [x] `sandbox-tool-policy.json` created
+- [x] `searxng-plugin.json` created
+- [x] `security-audit.txt` created
+- [ ] Review every file for secrets before any public commit
+- [ ] Commit only safe selected evidence artifacts
 
 ## Network readiness
 
 - [x] Self-hosted SearXNG configured
-- [ ] Managed browser configured with deliberate permissions
-- [ ] Deep security audit rerun after browser setup
+- [x] Managed browser configured with deliberate permissions
+- [x] Deep security audit rerun after browser setup
 - [ ] Stable LAN address reserved
 - [ ] Trusted LAN access configured
 - [ ] Guest and IoT isolation verified
