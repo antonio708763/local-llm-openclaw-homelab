@@ -116,3 +116,131 @@ cat ~/.openclaw/workspace/memory/2026-07-26.md
 ```
 
 A fresh session was then used to prove that durable information was loaded from disk.
+
+## Browser build terminal closed immediately
+
+The first browser-build block used:
+
+```bash
+set -euo pipefail
+```
+
+When a later command failed, Bash exited immediately. In a terminal window whose shell was the main process, that also closed the window.
+
+Resolution: troubleshoot without `set -e`, test each step separately, and keep the terminal open long enough to inspect the failing command.
+
+## npm returned an empty OpenClaw `gitHead`
+
+The installed package version was detected correctly as `2026.7.1-2`, but:
+
+```bash
+npm view "openclaw@2026.7.1-2" gitHead
+```
+
+returned an empty value. That prevented constructing raw GitHub source URLs from a commit SHA.
+
+Resolution:
+
+1. Remove the package-republish suffix to obtain the base release `2026.7.1`.
+2. Check candidate Git tags with `git ls-remote`.
+3. Use the matching tag `v2026.7.1`.
+4. Clone that tag and run the official browser setup script.
+
+## Browser source clone tried to use `/openclaw`
+
+The variable assignment accidentally began with a backslash:
+
+```bash
+\BUILD_DIR="$(mktemp -d)"
+```
+
+Bash treated the assignment as a command instead of setting `BUILD_DIR`. The variable stayed empty, so the clone destination became `/openclaw`, which failed with permission denied.
+
+Resolution:
+
+```bash
+BUILD_DIR="/tmp/openclaw-browser-build"
+rm -rf "$BUILD_DIR"
+
+git clone \
+  --depth 1 \
+  --branch v2026.7.1 \
+  https://github.com/openclaw/openclaw.git \
+  "$BUILD_DIR"
+```
+
+Then:
+
+```bash
+cd "$BUILD_DIR"
+bash scripts/sandbox-browser-setup.sh
+```
+
+## Browser image appeared empty while the build was running
+
+Running this in a second terminal before the build completed showed only the headings:
+
+```bash
+docker images openclaw-sandbox-browser:bookworm-slim
+```
+
+This was expected. Docker does not tag the final image until the build succeeds. The build later completed and produced image ID `33fbbf1cd311`.
+
+## Browser tool required two policy gates
+
+The browser configuration was valid, but the tool still needed to be exposed globally and within the sandbox policy.
+
+Resolution:
+
+```bash
+openclaw config set tools.alsoAllow '["browser"]' --strict-json
+
+openclaw config set \
+  tools.sandbox.tools.alsoAllow \
+  '["web_search","web_fetch","browser"]' \
+  --strict-json
+
+openclaw config validate
+openclaw gateway restart
+```
+
+A fresh TUI session then received the browser tool.
+
+## Deep audit reported an unpinned SearXNG plugin
+
+The plugin version was `2026.7.1`, but the recorded installation specification was the unversioned package name.
+
+Resolution:
+
+```bash
+openclaw plugins install \
+  npm:@openclaw/searxng-plugin@2026.7.1 \
+  --pin \
+  --force
+
+openclaw gateway restart
+```
+
+Runtime inspection then showed:
+
+```text
+spec: @openclaw/searxng-plugin@2026.7.1
+resolvedSpec: @openclaw/searxng-plugin@2026.7.1
+```
+
+The unpinned-plugin warning disappeared from the next deep audit.
+
+## Managed-browser memory update did not complete
+
+After the browser milestone, the direct Ubuntu verification showed:
+
+- `MEMORY.md` still named managed-browser configuration as the next task.
+- `memory/2026-07-28.md` did not exist.
+
+This means the Forge write request did not complete even though the rest of the local evidence bundle was created.
+
+Required follow-up:
+
+1. Retry the memory write in a fresh TUI session.
+2. Explicitly require the `read`, `write`, or `edit` tools.
+3. Verify both files directly from Ubuntu before declaring the memory checkpoint complete.
