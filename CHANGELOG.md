@@ -6,6 +6,7 @@
 
 - `docs/15-managed-browser-and-security-audit.md`.
 - `docs/16-controlled-shared-folder-access.md`.
+- `docs/17-trusted-linux-client-ssh-tunnel.md`.
 - Isolated OpenClaw managed-browser image `openclaw-sandbox-browser:bookworm-slim`.
 - Dedicated Docker network `openclaw-sandbox-browser` for browser automation.
 - Browser snapshot and screenshot validation.
@@ -13,6 +14,8 @@
 - Narrow command-sandbox bind from `Forge_Shared` to `/forge-share:rw`.
 - Local managed-browser evidence bundle under `~/.openclaw/workspace/checkpoints/2026-07-28-managed-browser/`.
 - Local controlled-share evidence bundle under `~/.openclaw/workspace/checkpoints/2026-07-28-controlled-share/`.
+- Dedicated Ed25519 key for the first trusted Linux client.
+- Persistent client-side `forge-gateway-tunnel.service` systemd user unit.
 
 ### Completed
 
@@ -67,17 +70,47 @@
 - Created command-bind, browser-bind, mount, partition, and host-verification evidence files locally.
 - Documented rollback commands.
 
+#### Trusted Linux client access
+
+- Inventoried the Forge host network interfaces, routes, Gateway configuration, listening sockets, NetworkManager state, and firewall implementation.
+- Confirmed the Forge host uses reserved address `192.168.110.187` on the trusted LAN.
+- Disabled unused `smbd` and `nmbd` services.
+- Confirmed Samba ports 139 and 445 are no longer listening.
+- Installed and enabled OpenSSH Server on the Forge host.
+- Confirmed `sshd -t` reports a valid configuration.
+- Created a dedicated Ed25519 key on the Ubuntu Alienware client.
+- Installed the public key for the Forge-host `antonio` account.
+- Validated key-only SSH login.
+- Created the `forge-gateway` SSH profile with a loopback-only local forward from client port `18789` to the Forge Gateway.
+- Kept the OpenClaw Gateway bound to `127.0.0.1:18789`.
+- Kept Ollama and SearXNG bound to loopback.
+- Identified the client's older local OpenClaw Gateway as the cause of the initial `Address already in use` error.
+- Stopped and disabled the client's older OpenClaw Gateway service.
+- Confirmed the SSH process owns client-side loopback port `18789`.
+- Confirmed the remote dashboard returns `HTTP/1.1 200 OK` through the tunnel.
+- Logged in using the Forge Gateway token.
+- Opened the existing Forge chat and durable memory from the trusted client.
+- Created and enabled `forge-gateway-tunnel.service`.
+- Enabled systemd user lingering and confirmed `Linger=yes`.
+- Rebooted the trusted client.
+- Confirmed the tunnel service returned as enabled and active after reboot.
+- Confirmed the client loopback listener and HTTP 200 response returned automatically after reboot.
+
 ### Pending
 
 - Review both local evidence bundles before selected artifacts are committed publicly.
 - Review and deliberately select SearXNG upstream engines.
-- Inventory the Ubuntu network and firewall state.
-- Configure authenticated trusted-LAN access.
+- Test tunnel recovery after Wi-Fi interruption.
+- Test tunnel recovery after a Forge-host or SSH-service restart.
+- Disable SSH password authentication after recovery access is confirmed.
+- Evaluate a dedicated restricted tunnel account.
+- Restrict SSH ingress with UFW and OPNsense.
+- Confirm Guest and IoT VLANs cannot reach the Forge host SSH service.
 - Audit NetBird for encrypted remote access.
 
 ### Current checkpoint
 
-The controlled `Forge_Shared` phase is complete. Forge has read/write access to one dedicated exchange folder, while the rest of `Dual_Boot_Share`, the Ubuntu home directory, and the managed browser remain isolated. The next phase is trusted-LAN network inventory and authenticated Gateway access without public exposure.
+The first trusted Linux client milestone is complete. The Ubuntu Alienware client reaches the loopback-only Forge Gateway through a dedicated-key SSH local-forward tunnel maintained by a systemd user service. The tunnel survived a client reboot, returned HTTP 200, and allowed token-authenticated access to the existing Forge chat and durable memory. OpenClaw, Ollama, and SearXNG remain loopback-only, and no public port forwarding or direct Gateway LAN bind has been introduced.
 
 ## 2026-07-26
 
