@@ -5,12 +5,18 @@
 ### Added
 
 - `docs/15-managed-browser-and-security-audit.md`.
+- `docs/16-controlled-shared-folder-access.md`.
 - Isolated OpenClaw managed-browser image `openclaw-sandbox-browser:bookworm-slim`.
 - Dedicated Docker network `openclaw-sandbox-browser` for browser automation.
 - Browser snapshot and screenshot validation.
+- Dedicated exchange folder `/mnt/Dual_Boot_Share/Forge_Shared`.
+- Narrow command-sandbox bind from `Forge_Shared` to `/forge-share:rw`.
 - Local managed-browser evidence bundle under `~/.openclaw/workspace/checkpoints/2026-07-28-managed-browser/`.
+- Local controlled-share evidence bundle under `~/.openclaw/workspace/checkpoints/2026-07-28-controlled-share/`.
 
 ### Completed
+
+#### Managed browser and security
 
 - Identified that the OpenClaw npm package did not expose a usable `gitHead` value for browser-image source retrieval.
 - Matched OpenClaw `2026.7.1-2` to the `v2026.7.1` Git tag.
@@ -33,16 +39,45 @@
 - Determined that the trusted-proxies warning requires no change while the Gateway remains loopback-only and no reverse proxy is in use.
 - Created browser configuration, image, runtime, policy, plugin, and audit evidence files locally.
 
+#### Durable memory
+
+- Repaired the managed-browser checkpoint in `MEMORY.md` after the first Forge write request did not complete.
+- Created and verified `memory/2026-07-28.md`.
+- Preserved the original file as `MEMORY.md.before-managed-browser-update.bak`.
+- Updated durable memory again after controlled shared-folder validation.
+- Recorded trusted-LAN access as the next phase.
+
+#### Controlled shared-folder access
+
+- Created `/mnt/Dual_Boot_Share/Forge_Shared` on the NTFS partition.
+- Confirmed the parent partition is mounted read/write with the `ntfs3` driver.
+- Enabled external Docker bind sources deliberately.
+- Mounted only `Forge_Shared` into the command sandbox as `/forge-share:rw`.
+- Explicitly configured browser binds as an empty array.
+- Recreated the command and browser sandbox runtimes.
+- Confirmed Forge runs as the unprivileged `sandbox` user while accessing the folder.
+- Confirmed Forge can read `host-created.txt`.
+- Confirmed Forge can create `forge-created.txt` and that the file appears on the Ubuntu host.
+- Confirmed the command sandbox cannot see the rest of `/mnt/Dual_Boot_Share`.
+- Confirmed the command sandbox cannot see `/home/antonio`.
+- Inspected the actual Docker mounts for the command and browser containers.
+- Confirmed the browser does not inherit `/forge-share` or any `Dual_Boot_Share` mount.
+- Ran direct browser-container tests that passed for both hidden paths.
+- Confirmed the managed browser still works after the bind changes.
+- Created command-bind, browser-bind, mount, partition, and host-verification evidence files locally.
+- Documented rollback commands.
+
 ### Pending
 
-- The attempted Forge memory update did not complete.
-- `MEMORY.md` still identifies managed-browser configuration as the next task.
-- `memory/2026-07-28.md` does not yet exist.
-- The local evidence bundle must be reviewed before selected artifacts are committed publicly.
+- Review both local evidence bundles before selected artifacts are committed publicly.
+- Review and deliberately select SearXNG upstream engines.
+- Inventory the Ubuntu network and firewall state.
+- Configure authenticated trusted-LAN access.
+- Audit NetBird for encrypted remote access.
 
 ### Current checkpoint
 
-The isolated managed-browser and security-audit phase is complete. The next functional phase is controlled access to a dedicated `Dual_Boot_Share` folder, after repairing the pending durable-memory checkpoint.
+The controlled `Forge_Shared` phase is complete. Forge has read/write access to one dedicated exchange folder, while the rest of `Dual_Boot_Share`, the Ubuntu home directory, and the managed browser remain isolated. The next phase is trusted-LAN network inventory and authenticated Gateway access without public exposure.
 
 ## 2026-07-26
 
