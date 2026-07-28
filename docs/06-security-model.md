@@ -5,10 +5,16 @@ Treat the model as an untrusted planner and OpenClaw as the privileged execution
 ## Trust boundaries
 
 ```text
-User
+Trusted Linux client
+  +-- dedicated SSH key
+  +-- local loopback forward
+  +-- OpenClaw token authentication
   |
   v
-OpenClaw Gateway
+Forge host OpenSSH service
+  |
+  v
+OpenClaw Gateway on 127.0.0.1:18789
   +-- token authentication
   +-- cautious execution policy
   +-- allowlist with ask-on-miss
@@ -32,8 +38,9 @@ OpenClaw Gateway
 - Read approved project repositories.
 - Write only inside approved workspaces and deliberately selected exchange folders.
 - Require approval for package installation, service changes, firewall changes, broad filesystem operations, and security-sensitive actions.
-- Keep the OpenClaw Gateway loopback-only until authenticated LAN access is deliberately configured.
+- Keep the OpenClaw Gateway loopback-only while SSH forwarding meets the trusted-client access requirement.
 - Keep Ollama and SearXNG loopback-only unless a separate reviewed design requires otherwise.
+- Treat OpenSSH as the only current LAN-facing entry point for the trusted-client path.
 
 ## Command sandbox
 
@@ -71,6 +78,19 @@ Approved path:
 - Confirm that files written by Forge are expected before opening or executing them outside the sandbox.
 - Remove the bind and disable external bind sources if the exchange folder is no longer required.
 
+## Trusted Linux client
+
+- Use a dedicated Ed25519 key for the Forge connection.
+- Keep the private key only on the trusted client.
+- Use `IdentitiesOnly yes` so unrelated keys are not offered.
+- Use `ExitOnForwardFailure yes` so a failed local forward does not look healthy.
+- Bind the client-side forwarded port only to loopback.
+- Keep Gateway token authentication enabled in addition to SSH authentication.
+- Disable the client's conflicting local OpenClaw Gateway while it needs the same loopback port.
+- Maintain the tunnel with a systemd user service and verify it after reboot.
+- Disable SSH password authentication only after key-based recovery access has been confirmed.
+- Prefer a dedicated restricted tunnel account before adding more clients.
+
 ## Remote systems
 
 - Start read-only.
@@ -97,12 +117,14 @@ Approved path:
 
 ## Network exposure
 
-- No public port forwarding for OpenClaw.
-- Keep token authentication enabled.
-- Restrict trusted-LAN access with host firewall rules.
-- Confirm Guest and IoT VLANs cannot connect.
+- No public port forwarding for OpenClaw, Ollama, SearXNG, or SSH.
+- Keep OpenClaw token authentication enabled.
+- Keep the Gateway on `127.0.0.1:18789` and reach it through an authenticated SSH local forward.
+- Restrict TCP port 22 with host and network firewall rules before treating Phase 7 as complete.
+- Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
 - Configure `gateway.trustedProxies` before placing the Control UI behind a reverse proxy.
 - Use NetBird or another reviewed encrypted overlay for remote access.
+- Prefer carrying the same SSH-forward pattern over the encrypted overlay instead of exposing the Gateway directly.
 
 ## Secrets
 
