@@ -140,19 +140,36 @@ Status: **Complete**
 - [x] Document rollback commands
 - [x] Update durable memory and create checkpoint evidence
 
-## Phase 7 — LAN access
+## Phase 7 — Trusted-LAN access
 
-Status: **Next phase**
+Status: **In progress — first trusted Linux client validated**
 
-- [ ] Inventory Ubuntu interfaces, routes, Gateway settings, listening sockets, and firewall state
-- [ ] Reserve a stable DHCP address
-- [ ] Decide whether OpenClaw binds directly to the trusted LAN or sits behind a reverse proxy
-- [ ] Keep token authentication enabled
-- [ ] Configure host firewall rules
-- [ ] Test from one trusted LAN computer
-- [ ] Confirm Guest and IoT VLANs cannot connect
-- [ ] Keep Ollama on loopback
-- [ ] Avoid public port forwarding
+- [x] Inventory Ubuntu interfaces, routes, Gateway settings, listening sockets, and firewall state
+- [x] Reserve the Forge host at `192.168.110.187`
+- [x] Select SSH local forwarding instead of a direct Gateway LAN bind or reverse proxy
+- [x] Keep the OpenClaw Gateway bound to `127.0.0.1:18789`
+- [x] Keep token authentication enabled
+- [x] Keep Ollama on loopback
+- [x] Keep SearXNG on loopback
+- [x] Avoid public port forwarding
+- [x] Disable unused Samba services on the Forge host
+- [x] Install and validate OpenSSH Server on the Forge host
+- [x] Create a dedicated Ed25519 key on the trusted Linux client
+- [x] Install and validate the client public key
+- [x] Create the `forge-gateway` SSH profile with a loopback-only local forward
+- [x] Disable the conflicting older local OpenClaw Gateway on the client
+- [x] Confirm the client tunnel returns HTTP 200 from the remote dashboard
+- [x] Log in through the tunnel using the Forge Gateway token
+- [x] Create and enable `forge-gateway-tunnel.service`
+- [x] Enable systemd user lingering on the client
+- [x] Reboot the client and confirm automatic tunnel restoration
+- [x] Confirm the client can open the existing Forge chat and durable memory
+- [ ] Disable SSH password authentication after recovery access is confirmed
+- [ ] Evaluate a dedicated restricted tunnel account
+- [ ] Restrict SSH ingress with UFW and OPNsense
+- [ ] Confirm Guest and IoT VLANs cannot reach the Forge host SSH service
+- [ ] Test tunnel recovery after Wi-Fi interruption
+- [ ] Test tunnel recovery after a Forge-host restart
 
 ## Phase 8 — Remote access
 
@@ -163,6 +180,7 @@ Status: **Not started**
 - [ ] Confirm direct and relay connectivity
 - [ ] Create an OpenClaw access group and policy
 - [ ] Confirm no public port-forward is required
+- [ ] Reuse the SSH-forward design over the approved encrypted overlay where practical
 
 ## Phase 9 — Controlled interaction with other computers
 
