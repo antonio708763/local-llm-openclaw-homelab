@@ -109,38 +109,50 @@ Status: **Complete**
 
 ## Phase 5A — Memory and evidence housekeeping
 
-Status: **Pending**
+Status: **Complete for current milestones**
 
-- [ ] Update the durable `MEMORY.md` current checkpoint
-- [ ] Create `memory/2026-07-28.md`
-- [ ] Verify both memory files directly from Ubuntu
-- [ ] Review the local managed-browser evidence bundle for secrets
+- [x] Update the durable `MEMORY.md` current checkpoint
+- [x] Create and verify `memory/2026-07-28.md`
+- [x] Verify both memory files directly from Ubuntu
+- [x] Create local managed-browser evidence bundle
+- [x] Create local controlled-share evidence bundle
+- [ ] Review both local evidence bundles for secrets
 - [ ] Commit only safe, selected evidence artifacts
 
 ## Phase 6 — Controlled filesystem access
 
-Status: **Next functional phase**
+Status: **Complete**
 
-- [ ] Create `/mnt/Dual_Boot_Share/Forge_Shared`
-- [ ] Decide whether initial access should be read-only or read/write
-- [ ] Mount only `Forge_Shared` into the command sandbox
-- [ ] Prevent the browser sandbox from inheriting the shared-folder mount
-- [ ] Test file creation in the dedicated folder
-- [ ] Confirm Forge cannot reach unrelated `Dual_Boot_Share` data
-- [ ] Confirm Forge still cannot reach unrelated host data
-- [ ] Document rollback commands
+- [x] Create `/mnt/Dual_Boot_Share/Forge_Shared`
+- [x] Select read/write access for the dedicated exchange folder
+- [x] Enable external Docker bind sources deliberately
+- [x] Mount only `Forge_Shared` into the command sandbox as `/forge-share:rw`
+- [x] Explicitly set browser binds to an empty array
+- [x] Recreate command and browser sandbox runtimes
+- [x] Confirm Forge can read a host-created file
+- [x] Confirm Forge can create a host-visible file
+- [x] Confirm Forge cannot reach the rest of `Dual_Boot_Share`
+- [x] Confirm Forge cannot reach `/home/antonio`
+- [x] Inspect actual command-container mounts
+- [x] Inspect actual browser-container mounts
+- [x] Confirm the browser cannot see `/forge-share`
+- [x] Confirm the browser cannot see `/mnt/Dual_Boot_Share`
+- [x] Document rollback commands
+- [x] Update durable memory and create checkpoint evidence
 
 ## Phase 7 — LAN access
 
-Status: **Not started**
+Status: **Next phase**
 
+- [ ] Inventory Ubuntu interfaces, routes, Gateway settings, listening sockets, and firewall state
 - [ ] Reserve a stable DHCP address
-- [ ] Decide whether OpenClaw binds to the trusted LAN or sits behind a reverse proxy
+- [ ] Decide whether OpenClaw binds directly to the trusted LAN or sits behind a reverse proxy
 - [ ] Keep token authentication enabled
-- [ ] Configure firewall rules
+- [ ] Configure host firewall rules
 - [ ] Test from one trusted LAN computer
 - [ ] Confirm Guest and IoT VLANs cannot connect
 - [ ] Keep Ollama on loopback
+- [ ] Avoid public port forwarding
 
 ## Phase 8 — Remote access
 
