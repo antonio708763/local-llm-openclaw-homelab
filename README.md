@@ -16,6 +16,7 @@ A documented build for running a self-hosted coding assistant on a dual-boot wor
 - **Search service:** self-hosted SearXNG on `127.0.0.1:8888`
 - **Managed browser:** isolated Chromium container using `openclaw-sandbox-browser:bookworm-slim`
 - **Shared storage:** `Dual_Boot_Share`, NTFS, mounted at `/mnt/Dual_Boot_Share`
+- **Forge exchange folder:** `/mnt/Dual_Boot_Share/Forge_Shared`, exposed only to the command sandbox as `/forge-share`
 
 ## Current architecture
 
@@ -40,8 +41,9 @@ Docker command sandbox
     +-- user: sandbox, UID 1000
     +-- Debian 12
     +-- /workspace <-> ~/.openclaw/workspace (read/write)
+    +-- /forge-share <-> /mnt/Dual_Boot_Share/Forge_Shared (read/write)
     +-- bridge networking for outbound DNS and HTTPS
-    `-- Ubuntu host home and Dual_Boot_Share are not mounted
+    `-- Ubuntu host home and the rest of Dual_Boot_Share are not mounted
 
 Forge browser automation
     |
@@ -52,10 +54,11 @@ Docker browser sandbox
     +-- host-browser control: disabled
     +-- personal browser profiles: not mounted
     +-- /workspace mounted read/write
+    +-- no Forge_Shared or Dual_Boot_Share mount
     `-- screenshots stored under ~/.openclaw/media on Ubuntu
 ```
 
-The Gateway, Ollama, and SearXNG remain loopback-only. No public port forwarding, LAN binding, remote exposure, or sandbox access to `Dual_Boot_Share` has been enabled.
+The Gateway, Ollama, and SearXNG remain loopback-only. No public port forwarding, LAN binding, or remote exposure has been enabled. Forge can access only the dedicated `Forge_Shared` folder on `Dual_Boot_Share`; the rest of the partition remains unavailable to both sandboxes.
 
 ## Completed
 
@@ -93,6 +96,7 @@ The Gateway, Ollama, and SearXNG remain loopback-only. No public port forwarding
 - [x] Tuned compaction for the 32,768-token model
 - [x] Created and verified durable `MEMORY.md` and dated memory notes
 - [x] Confirmed durable memory is available in a fresh session
+- [x] Updated durable memory after the managed-browser and controlled-share milestones
 
 ### Docker command sandbox
 
@@ -134,39 +138,57 @@ The Gateway, Ollama, and SearXNG remain loopback-only. No public port forwarding
 - [x] Confirmed no personal Chrome, Chromium, Firefox, or credential directories were mounted
 - [x] Reran the deep OpenClaw security audit
 
+### Controlled shared-folder access
+
+- [x] Created `/mnt/Dual_Boot_Share/Forge_Shared`
+- [x] Mounted only that folder into the command sandbox as `/forge-share:rw`
+- [x] Explicitly kept browser binds empty
+- [x] Recreated the command and browser sandbox runtimes
+- [x] Confirmed Forge can read a host-created file
+- [x] Confirmed Forge can create a file that appears on the Ubuntu host
+- [x] Confirmed the rest of `/mnt/Dual_Boot_Share` is hidden inside the command sandbox
+- [x] Confirmed `/home/antonio` remains hidden inside the command sandbox
+- [x] Inspected the actual Docker mounts for both containers
+- [x] Confirmed the browser cannot see `/forge-share` or `/mnt/Dual_Boot_Share`
+- [x] Updated durable memory and created a controlled-share evidence bundle
+
 ## Validated results
 
 ```text
-Model:                   qwen3-coder:30b
-Processor:               100% GPU
-Context:                 32768 tokens
-GPU memory:              approximately 21.7 GiB / 24.6 GiB
-Gateway bind:            127.0.0.1:18789
-Gateway RPC probe:       ok
-Exec host:               sandbox
-Exec security:           allowlist
-Exec approval:           ask-on-miss
-Command sandbox image:   openclaw-sandbox:bookworm-slim
-Command sandbox user:    sandbox, UID 1000
-Command sandbox OS:      Debian GNU/Linux 12
-Workspace mount:         /workspace, read/write
-Host home visible:       no
-DNS:                     working
-Outbound HTTPS:          working
-SearXNG bind:             127.0.0.1:8888
-SearXNG JSON API:         working
-SearXNG plugin pin:       @openclaw/searxng-plugin@2026.7.1
-OpenClaw web_search:      working through SearXNG
-Browser sandbox image:   openclaw-sandbox-browser:bookworm-slim
-Browser network:         openclaw-sandbox-browser
-Host-browser control:    disabled
-Personal browser mounts: none
-Browser navigation:      working
-Browser snapshot:        working
-Browser screenshot:      working
-Compaction reserve:      8192 tokens
-Recent-token keep:       6000 tokens
-Durable memory:          verified across sessions
+Model:                     qwen3-coder:30b
+Processor:                 100% GPU
+Context:                   32768 tokens
+GPU memory:                approximately 21.7 GiB / 24.6 GiB
+Gateway bind:              127.0.0.1:18789
+Gateway RPC probe:         ok
+Exec host:                 sandbox
+Exec security:             allowlist
+Exec approval:             ask-on-miss
+Command sandbox image:     openclaw-sandbox:bookworm-slim
+Command sandbox user:      sandbox, UID 1000
+Command sandbox OS:        Debian GNU/Linux 12
+Workspace mount:           /workspace, read/write
+Forge shared mount:        /forge-share, read/write
+Forge shared host source:  /mnt/Dual_Boot_Share/Forge_Shared
+Whole share visible:       no
+Host home visible:         no
+DNS:                       working
+Outbound HTTPS:            working
+SearXNG bind:              127.0.0.1:8888
+SearXNG JSON API:           working
+SearXNG plugin pin:         @openclaw/searxng-plugin@2026.7.1
+OpenClaw web_search:        working through SearXNG
+Browser sandbox image:     openclaw-sandbox-browser:bookworm-slim
+Browser network:           openclaw-sandbox-browser
+Host-browser control:      disabled
+Personal browser mounts:   none
+Browser shared mount:      none
+Browser navigation:        working
+Browser snapshot:          working
+Browser screenshot:        working
+Compaction reserve:        8192 tokens
+Recent-token keep:         6000 tokens
+Durable memory:            verified and current
 ```
 
 ## Security-audit position
@@ -176,30 +198,30 @@ The most recent deep audit reports:
 - **1 critical:** OpenClaw classifies `qwen3-coder:30b` as a small model for untrusted web inputs while `web_search` and `web_fetch` are enabled.
 - **1 warning:** `trustedProxies` is empty while the Gateway is loopback-only.
 
-The trusted-proxies warning requires no action until a reverse proxy is deliberately introduced. The small-model finding is accepted residual risk for the current single-user lab because command and browser activity are sandboxed, the Gateway is loopback-only, personal browser profiles are excluded, and unrelated host files are not mounted.
+The trusted-proxies warning requires no action until a reverse proxy is deliberately introduced. The small-model finding is accepted residual risk for the current single-user lab because command and browser activity are sandboxed, the Gateway is loopback-only, personal browser profiles are excluded, and external data access is limited to one deliberately selected folder.
 
 The managed browser must not be used for banking, personal email, password managers, or sensitive administrative accounts.
 
 ## Current checkpoint
 
-The isolated managed-browser phase is complete, including navigation, snapshot, screenshot, mount-isolation verification, plugin pinning, and the deep security audit.
+The controlled `Forge_Shared` phase is complete. Forge can exchange files through one narrowly scoped read/write bind while the remainder of `Dual_Boot_Share`, the Ubuntu home directory, and the managed browser remain isolated.
 
-The attempted Forge memory update did not complete. The existing `MEMORY.md` still names managed-browser configuration as the next task, and `memory/2026-07-28.md` has not yet been created. A local evidence bundle was created successfully under:
+Durable memory was updated, and a local evidence bundle was created under:
 
 ```text
-~/.openclaw/workspace/checkpoints/2026-07-28-managed-browser/
+~/.openclaw/workspace/checkpoints/2026-07-28-controlled-share/
 ```
 
 ## Next tasks
 
-1. Repair the pending `MEMORY.md` checkpoint and create `memory/2026-07-28.md`.
-2. Review the local browser evidence bundle for secrets before committing selected text artifacts.
-3. Create a dedicated `Dual_Boot_Share/Forge_Shared` folder.
-4. Mount only that folder into the command sandbox.
-5. Keep the browser sandbox from inheriting the shared-folder mount.
-6. Test controlled read/write access and confirm unrelated data remains unavailable.
-7. Configure authenticated trusted-LAN access.
-8. Audit NetBird for remote access.
+1. Inventory the Ubuntu network, Gateway configuration, listening sockets, and firewall state.
+2. Reserve a stable trusted-LAN address.
+3. Decide whether the Gateway should bind directly to the trusted LAN or sit behind a local reverse proxy.
+4. Keep token authentication enabled and restrict access with the host firewall.
+5. Test from one trusted LAN computer.
+6. Confirm Guest and IoT VLANs cannot connect.
+7. Audit NetBird for encrypted remote access without public port forwarding.
+8. Begin controlled management of a lab computer.
 
 ## Repository map
 
@@ -223,7 +245,8 @@ The attempted Forge memory update did not complete. The existing `MEMORY.md` sti
 │   ├── 12-docker-and-sandbox.md
 │   ├── 13-sandbox-runtime-validation.md
 │   ├── 14-searxng-compaction-and-memory.md
-│   └── 15-managed-browser-and-security-audit.md
+│   ├── 15-managed-browser-and-security-audit.md
+│   └── 16-controlled-shared-folder-access.md
 ├── docker/
 │   └── openclaw-sandbox/
 │       └── Dockerfile
@@ -237,10 +260,11 @@ The attempted Forge memory update did not complete. The existing `MEMORY.md` sti
 2. Require authentication for OpenClaw LAN and remote access.
 3. Keep command execution approval-controlled.
 4. Run generated commands inside a sandbox whenever practical.
-5. Do not mount production data into the sandbox by default.
-6. Keep the managed browser separate from personal browser profiles and credentials.
-7. Do not use the managed browser for banking, personal email, password managers, or sensitive administration.
-8. Treat webpage content and search results as untrusted input.
-9. Test infrastructure changes against lab systems first.
-10. Do not commit tokens, API keys, SearXNG secret keys, or `openclaw.json` secrets.
-11. Keep documentation and change history in Git.
+5. Mount only the smallest deliberately selected external folder; never mount an entire production or archive drive by default.
+6. Keep secrets, tokens, private keys, and sensitive personal files out of `Forge_Shared`.
+7. Keep the managed browser separate from personal browser profiles, credentials, and external data binds.
+8. Do not use the managed browser for banking, personal email, password managers, or sensitive administration.
+9. Treat webpage content and search results as untrusted input.
+10. Test infrastructure changes against lab systems first.
+11. Do not commit tokens, API keys, SearXNG secret keys, or `openclaw.json` secrets.
+12. Keep documentation and change history in Git.
