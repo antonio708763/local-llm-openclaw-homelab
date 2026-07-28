@@ -1,6 +1,6 @@
 # Local LLM + OpenClaw Homelab
 
-A documented build for running a self-hosted coding assistant on a dual-boot workstation, with future trusted LAN and encrypted remote access.
+A documented build for running a self-hosted coding assistant on a dual-boot workstation, with authenticated trusted-LAN access and future encrypted remote access.
 
 ## Target system
 
@@ -17,21 +17,35 @@ A documented build for running a self-hosted coding assistant on a dual-boot wor
 - **Managed browser:** isolated Chromium container using `openclaw-sandbox-browser:bookworm-slim`
 - **Shared storage:** `Dual_Boot_Share`, NTFS, mounted at `/mnt/Dual_Boot_Share`
 - **Forge exchange folder:** `/mnt/Dual_Boot_Share/Forge_Shared`, exposed only to the command sandbox as `/forge-share`
+- **First trusted client:** Ubuntu Linux on an Alienware laptop
+- **Trusted-client transport:** persistent SSH local-forward tunnel
 
 ## Current architecture
 
 ```text
-OpenClaw TUI
+Trusted Alienware Linux client
     |
-    | ws://127.0.0.1:18789
+    | browser -> http://127.0.0.1:18789
+    |
+    | dedicated Ed25519 key
+    | encrypted SSH local forward to 192.168.110.187:22
     v
-OpenClaw Gateway
+OpenSSH on Forge host
+    |
+    v
+OpenClaw Gateway 127.0.0.1:18789
     |
     +-- http://127.0.0.1:11434 --> Ollama --> qwen3-coder:30b --> RTX 4090
     |
     +-- web_search --> SearXNG on 127.0.0.1:8888 --> upstream search engines
     |
     `-- browser tool --> isolated Chromium browser container
+
+Local OpenClaw TUI
+    |
+    | ws://127.0.0.1:18789
+    v
+OpenClaw Gateway
 
 Forge command execution
     |
@@ -58,7 +72,7 @@ Docker browser sandbox
     `-- screenshots stored under ~/.openclaw/media on Ubuntu
 ```
 
-The Gateway, Ollama, and SearXNG remain loopback-only. No public port forwarding, LAN binding, or remote exposure has been enabled. Forge can access only the dedicated `Forge_Shared` folder on `Dual_Boot_Share`; the rest of the partition remains unavailable to both sandboxes.
+The Gateway, Ollama, and SearXNG remain loopback-only. The Gateway has not been bound directly to the LAN and no reverse proxy or public port forwarding has been enabled. One trusted Linux client reaches the Gateway through an authenticated SSH local-forward tunnel. Forge can access only the dedicated `Forge_Shared` folder on `Dual_Boot_Share`; the rest of the partition remains unavailable to both sandboxes.
 
 ## Completed
 
@@ -152,6 +166,23 @@ The Gateway, Ollama, and SearXNG remain loopback-only. No public port forwarding
 - [x] Confirmed the browser cannot see `/forge-share` or `/mnt/Dual_Boot_Share`
 - [x] Updated durable memory and created a controlled-share evidence bundle
 
+### First trusted Linux client
+
+- [x] Inventoried the Forge host interfaces, routes, Gateway bind, listening sockets, and firewall implementation
+- [x] Reserved the Forge host at `192.168.110.187`
+- [x] Disabled unused Samba services and closed ports 139 and 445
+- [x] Installed and validated OpenSSH Server
+- [x] Created a dedicated Ed25519 client key
+- [x] Confirmed key-only SSH login from the Alienware client
+- [x] Kept the OpenClaw Gateway bound to loopback
+- [x] Forwarded client `127.0.0.1:18789` to Forge-host `127.0.0.1:18789` through SSH
+- [x] Disabled the Alienware's conflicting older local OpenClaw Gateway
+- [x] Loaded the remote dashboard and authenticated with the Forge Gateway token
+- [x] Created `forge-gateway-tunnel.service` as a persistent systemd user service
+- [x] Enabled user lingering for pre-login operation
+- [x] Rebooted the client and confirmed the tunnel automatically returned
+- [x] Confirmed the dashboard, existing Forge chat, and durable memory remain accessible after reboot
+
 ## Validated results
 
 ```text
@@ -161,6 +192,15 @@ Context:                   32768 tokens
 GPU memory:                approximately 21.7 GiB / 24.6 GiB
 Gateway bind:              127.0.0.1:18789
 Gateway RPC probe:         ok
+Gateway authentication:    token
+Forge host LAN address:    192.168.110.187
+LAN access method:         SSH local forwarding
+Forge host SSH port:       22
+Trusted client:            user-Alienware-15-R3
+Client forwarded bind:     127.0.0.1:18789
+Tunnel service:            forge-gateway-tunnel.service
+Tunnel after reboot:       enabled and active
+Dashboard through tunnel:  HTTP/1.1 200 OK
 Exec host:                 sandbox
 Exec security:             allowlist
 Exec approval:             ask-on-miss
@@ -202,26 +242,25 @@ The trusted-proxies warning requires no action until a reverse proxy is delibera
 
 The managed browser must not be used for banking, personal email, password managers, or sensitive administrative accounts.
 
+The trusted-client tunnel adds SSH as a LAN-facing service. SSH password authentication is still enabled and must be hardened before Phase 7 is treated as complete.
+
 ## Current checkpoint
 
-The controlled `Forge_Shared` phase is complete. Forge can exchange files through one narrowly scoped read/write bind while the remainder of `Dual_Boot_Share`, the Ubuntu home directory, and the managed browser remain isolated.
+The first trusted Linux client milestone is complete. The Alienware client now reaches the loopback-only Forge Gateway through a dedicated-key SSH tunnel maintained by a systemd user service. The tunnel survived a client reboot, returned HTTP 200, and allowed token-authenticated access to the existing Forge chat and durable memory.
 
-Durable memory was updated, and a local evidence bundle was created under:
-
-```text
-~/.openclaw/workspace/checkpoints/2026-07-28-controlled-share/
-```
+OpenClaw, Ollama, and SearXNG remain loopback-only, and no public port forwarding or direct Gateway LAN bind has been introduced.
 
 ## Next tasks
 
-1. Inventory the Ubuntu network, Gateway configuration, listening sockets, and firewall state.
-2. Reserve a stable trusted-LAN address.
-3. Decide whether the Gateway should bind directly to the trusted LAN or sit behind a local reverse proxy.
-4. Keep token authentication enabled and restrict access with the host firewall.
-5. Test from one trusted LAN computer.
-6. Confirm Guest and IoT VLANs cannot connect.
-7. Audit NetBird for encrypted remote access without public port forwarding.
-8. Begin controlled management of a lab computer.
+1. Test automatic tunnel recovery after disconnecting and reconnecting the Alienware Wi-Fi.
+2. Test automatic recovery after restarting the Forge host or its SSH service.
+3. Confirm emergency key access, then disable SSH password authentication.
+4. Evaluate a dedicated restricted account for tunnel-only access.
+5. Restrict SSH ingress with UFW and OPNsense.
+6. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
+7. Review and deliberately select SearXNG upstream engines.
+8. Audit NetBird for encrypted remote access without public port forwarding.
+9. Begin controlled management of a lab computer.
 
 ## Repository map
 
@@ -246,7 +285,8 @@ Durable memory was updated, and a local evidence bundle was created under:
 │   ├── 13-sandbox-runtime-validation.md
 │   ├── 14-searxng-compaction-and-memory.md
 │   ├── 15-managed-browser-and-security-audit.md
-│   └── 16-controlled-shared-folder-access.md
+│   ├── 16-controlled-shared-folder-access.md
+│   └── 17-trusted-linux-client-ssh-tunnel.md
 ├── docker/
 │   └── openclaw-sandbox/
 │       └── Dockerfile
@@ -256,15 +296,17 @@ Durable memory was updated, and a local evidence bundle was created under:
 
 ## Safety rules
 
-1. Keep Ollama, SearXNG, and the Gateway private and loopback-only until authenticated access is deliberately configured.
-2. Require authentication for OpenClaw LAN and remote access.
-3. Keep command execution approval-controlled.
-4. Run generated commands inside a sandbox whenever practical.
-5. Mount only the smallest deliberately selected external folder; never mount an entire production or archive drive by default.
-6. Keep secrets, tokens, private keys, and sensitive personal files out of `Forge_Shared`.
-7. Keep the managed browser separate from personal browser profiles, credentials, and external data binds.
-8. Do not use the managed browser for banking, personal email, password managers, or sensitive administration.
-9. Treat webpage content and search results as untrusted input.
-10. Test infrastructure changes against lab systems first.
-11. Do not commit tokens, API keys, SearXNG secret keys, or `openclaw.json` secrets.
-12. Keep documentation and change history in Git.
+1. Keep Ollama, SearXNG, and the Gateway loopback-only while SSH forwarding meets the access requirement.
+2. Require both SSH authentication and OpenClaw token authentication for trusted-client access.
+3. Do not publish OpenClaw, Ollama, SearXNG, or SSH through a public router port-forward.
+4. Keep command execution approval-controlled.
+5. Run generated commands inside a sandbox whenever practical.
+6. Mount only the smallest deliberately selected external folder; never mount an entire production or archive drive by default.
+7. Keep secrets, tokens, private keys, and sensitive personal files out of `Forge_Shared`.
+8. Keep the managed browser separate from personal browser profiles, credentials, and external data binds.
+9. Do not use the managed browser for banking, personal email, password managers, or sensitive administration.
+10. Treat webpage content and search results as untrusted input.
+11. Keep SSH private keys off Git and revoke a trusted client by removing its exact authorized-key entry.
+12. Test infrastructure changes against lab systems first.
+13. Do not commit tokens, API keys, SearXNG secret keys, or `openclaw.json` secrets.
+14. Keep documentation and change history in Git.
