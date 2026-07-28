@@ -55,7 +55,7 @@ Status: **Complete**
 - [x] Create durable memory files
 - [x] Verify durable memory across a fresh session
 
-## Phase 4 — Docker sandbox
+## Phase 4 — Docker command sandbox
 
 Status: **Complete**
 
@@ -81,7 +81,7 @@ Status: **Complete**
 
 ## Phase 5 — Web research and managed browser
 
-Status: **Web search complete; managed browser next**
+Status: **Complete**
 
 - [x] Install the OpenClaw SearXNG plugin
 - [x] Deploy a self-hosted SearXNG instance
@@ -91,22 +91,44 @@ Status: **Web search complete; managed browser next**
 - [x] Configure OpenClaw web search to use SearXNG
 - [x] Add `web_search` and `web_fetch` to the sandbox allowlist
 - [x] Test current-information retrieval in a fresh session
+- [x] Pin SearXNG to `@openclaw/searxng-plugin@2026.7.1`
+- [x] Build `openclaw-sandbox-browser:bookworm-slim`
+- [x] Configure OpenClaw's managed browser separately
+- [x] Add `browser` to both required tool-policy gates
+- [x] Disable host-browser control
+- [x] Use a dedicated browser Docker network
+- [x] Open and inspect a test page
+- [x] Generate a browser snapshot and screenshot
+- [x] Verify browser screenshot persistence
+- [x] Keep the managed browser separate from personal browser profiles
+- [x] Review sandbox-browser mounts and isolation
+- [x] Rerun `openclaw security audit --deep`
+- [x] Record the accepted small-model web-input risk
+- [x] Record that `trustedProxies` needs no action while the Gateway is loopback-only
 - [ ] Review and deliberately select SearXNG upstream engines
-- [ ] Configure OpenClaw's managed browser separately
-- [ ] Explicitly allow only the browser capabilities needed
-- [ ] Keep the managed browser separate from the personal browser profile
-- [ ] Review sandbox and browser isolation
-- [ ] Rerun `openclaw security audit --deep`
+
+## Phase 5A — Memory and evidence housekeeping
+
+Status: **Pending**
+
+- [ ] Update the durable `MEMORY.md` current checkpoint
+- [ ] Create `memory/2026-07-28.md`
+- [ ] Verify both memory files directly from Ubuntu
+- [ ] Review the local managed-browser evidence bundle for secrets
+- [ ] Commit only safe, selected evidence artifacts
 
 ## Phase 6 — Controlled filesystem access
 
-Status: **Not started**
+Status: **Next functional phase**
 
-- [ ] Decide which `Dual_Boot_Share` folders Forge may access
-- [ ] Mount only selected paths into the sandbox
-- [ ] Start read-only where practical
-- [ ] Test file creation in a dedicated project folder
-- [ ] Confirm Forge cannot reach unrelated host data
+- [ ] Create `/mnt/Dual_Boot_Share/Forge_Shared`
+- [ ] Decide whether initial access should be read-only or read/write
+- [ ] Mount only `Forge_Shared` into the command sandbox
+- [ ] Prevent the browser sandbox from inheriting the shared-folder mount
+- [ ] Test file creation in the dedicated folder
+- [ ] Confirm Forge cannot reach unrelated `Dual_Boot_Share` data
+- [ ] Confirm Forge still cannot reach unrelated host data
+- [ ] Document rollback commands
 
 ## Phase 7 — LAN access
 
