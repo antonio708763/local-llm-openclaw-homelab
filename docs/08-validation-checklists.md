@@ -190,6 +190,63 @@
 - [x] Browser use restricted away from banking, personal email, password managers, and sensitive administration
 - [x] Web content designated as untrusted input
 
+## Trusted Linux client SSH-tunnel validation
+
+### Forge host
+
+- [x] Trusted-LAN address reserved as `192.168.110.187`
+- [x] Network, routes, Gateway bind, listening sockets, and firewall implementation inventoried
+- [x] Unused `smbd` and `nmbd` services disabled
+- [x] Samba ports 139 and 445 no longer listening
+- [x] OpenSSH Server installed
+- [x] `sshd -t` reports a valid configuration
+- [x] SSH service enabled and active
+- [x] TCP port 22 listening
+- [x] OpenClaw Gateway remains bound to `127.0.0.1:18789`
+- [x] Ollama remains bound to loopback
+- [x] SearXNG remains bound to loopback
+
+### Trusted client
+
+- [x] Ubuntu Linux client identified as `user-Alienware-15-R3`
+- [x] Dedicated `~/.ssh/openclaw_forge` Ed25519 key created
+- [x] Public key installed on the Forge host
+- [x] Key-only SSH login succeeded
+- [x] `forge-gateway` SSH profile created
+- [x] `LocalForward 18789 127.0.0.1:18789` validated
+- [x] `ExitOnForwardFailure yes` enabled
+- [x] SSH keepalive settings configured
+- [x] Conflicting older local OpenClaw Gateway stopped and disabled
+- [x] Client-side port `18789` became available
+- [x] Manual tunnel listener owned by `ssh`
+- [x] Dashboard through the tunnel returned `HTTP/1.1 200 OK`
+- [x] Gateway token login succeeded through the tunnel
+- [x] Existing Forge chat and durable memory opened successfully
+
+### Persistent tunnel
+
+- [x] `forge-gateway-tunnel.service` created as a systemd user service
+- [x] Unit enabled and started
+- [x] Unit uses `BatchMode=yes`
+- [x] Unit restarts automatically after failure
+- [x] User lingering enabled
+- [x] `Linger=yes` verified
+- [x] Client rebooted
+- [x] Tunnel service returned as enabled and active after reboot
+- [x] Loopback listener returned after reboot
+- [x] Dashboard returned HTTP 200 after reboot
+- [ ] Wi-Fi interruption recovery tested
+- [ ] Forge-host restart recovery tested
+
+### Remaining SSH hardening
+
+- [ ] Disable SSH password authentication after recovery access is confirmed
+- [ ] Evaluate a dedicated restricted tunnel account
+- [ ] Restrict SSH ingress with UFW
+- [ ] Restrict SSH ingress with OPNsense policy
+- [ ] Confirm Guest VLAN cannot reach TCP port 22
+- [ ] Confirm IoT VLAN cannot reach TCP port 22
+
 ## Local evidence bundles
 
 ### Managed browser
@@ -221,10 +278,13 @@
 - [x] Managed browser configured with deliberate permissions
 - [x] Deep security audit rerun after browser setup
 - [x] Controlled shared-folder access configured and validated
-- [ ] Current network and firewall state inventoried
-- [ ] Stable LAN address reserved
-- [ ] Trusted LAN access configured
+- [x] Current network and firewall implementation inventoried
+- [x] Stable Forge-host LAN address reserved
+- [x] First trusted Linux client configured through an SSH local-forward tunnel
+- [x] Gateway remains loopback-only and token-authenticated
+- [x] Persistent tunnel validated after client reboot
+- [ ] SSH authentication and ingress fully hardened
 - [ ] Guest and IoT isolation verified
 - [ ] NetBird deployment audited
 - [ ] Remote access tested
-- [ ] OpenClaw access boundaries implemented
+- [ ] OpenClaw access boundaries implemented for remote peers
