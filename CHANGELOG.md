@@ -1,5 +1,49 @@
 # Changelog
 
+## 2026-07-28
+
+### Added
+
+- `docs/15-managed-browser-and-security-audit.md`.
+- Isolated OpenClaw managed-browser image `openclaw-sandbox-browser:bookworm-slim`.
+- Dedicated Docker network `openclaw-sandbox-browser` for browser automation.
+- Browser snapshot and screenshot validation.
+- Local managed-browser evidence bundle under `~/.openclaw/workspace/checkpoints/2026-07-28-managed-browser/`.
+
+### Completed
+
+- Identified that the OpenClaw npm package did not expose a usable `gitHead` value for browser-image source retrieval.
+- Matched OpenClaw `2026.7.1-2` to the `v2026.7.1` Git tag.
+- Cloned the matching OpenClaw source and built the official sandbox-browser image.
+- Enabled the isolated browser sandbox and automatic startup.
+- Configured the browser image and dedicated Docker network.
+- Disabled host-browser control.
+- Enabled noVNC support while keeping browser automation isolated.
+- Added `browser` to the global and sandbox tool policy gates.
+- Created the first browser container automatically through a Forge browser request.
+- Opened `https://example.com` and validated the final URL, title, and main heading.
+- Generated a browser snapshot and screenshot.
+- Verified screenshot files under `~/.openclaw/media/browser` and `~/.openclaw/media/outbound`.
+- Inspected browser mounts and confirmed that no personal Chrome, Chromium, Firefox, or credential directories were exposed.
+- Confirmed the browser container uses `openclaw-sandbox-browser:bookworm-slim` and the `openclaw-sandbox-browser` network.
+- Pinned SearXNG to `@openclaw/searxng-plugin@2026.7.1`.
+- Reran `openclaw security audit --deep`.
+- Reduced the audit from one critical and two warnings to one critical and one warning.
+- Accepted the small-model-with-web-tools finding as residual risk under the current single-user, sandboxed, loopback-only design.
+- Determined that the trusted-proxies warning requires no change while the Gateway remains loopback-only and no reverse proxy is in use.
+- Created browser configuration, image, runtime, policy, plugin, and audit evidence files locally.
+
+### Pending
+
+- The attempted Forge memory update did not complete.
+- `MEMORY.md` still identifies managed-browser configuration as the next task.
+- `memory/2026-07-28.md` does not yet exist.
+- The local evidence bundle must be reviewed before selected artifacts are committed publicly.
+
+### Current checkpoint
+
+The isolated managed-browser and security-audit phase is complete. The next functional phase is controlled access to a dedicated `Dual_Boot_Share` folder, after repairing the pending durable-memory checkpoint.
+
 ## 2026-07-26
 
 ### Added
