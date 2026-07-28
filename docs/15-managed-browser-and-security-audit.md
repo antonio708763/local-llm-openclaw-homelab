@@ -2,7 +2,7 @@
 
 ## Goal
 
-Give Forge a dedicated browser for web interaction without exposing the personal Ubuntu browser profile, cookies, saved passwords, extensions, or unrelated host files.
+Give Forge a dedicated browser for web interaction without exposing the personal Ubuntu browser profile, cookies, saved passwords, extensions, unrelated host files, or the dedicated `Forge_Shared` exchange folder.
 
 The browser is separate from the command sandbox:
 
@@ -18,7 +18,7 @@ Browser sandbox
 
 ## Initial inspection
 
-The browser plugin was already enabled, but no browser configuration or browser image existed.
+The browser plugin was enabled, but no browser runtime image existed.
 
 Observed state:
 
@@ -30,13 +30,13 @@ Browser runtime: not running
 Sandbox-browser image: absent
 ```
 
-The host-managed browser was not started. The design goal was a Docker-isolated browser instead.
+The design goal was a Docker-isolated browser rather than the normal Ubuntu browser.
 
 ## Build the matching browser image
 
-OpenClaw was installed from npm as `2026.7.1-2`. The npm package did not expose a usable `gitHead`, so a commit-specific raw download could not be constructed.
+OpenClaw was installed from npm as `2026.7.1-2`. The npm package did not expose a usable `gitHead`, so a commit-specific raw source URL could not be constructed.
 
-Candidate Git tags were checked, and the installed package was matched to:
+The republish suffix was removed, candidate Git tags were checked, and the installed package was matched to:
 
 ```text
 v2026.7.1
@@ -79,13 +79,10 @@ Content size:  469 MB
 
 ## Browser configuration
 
-The isolated browser was enabled with the following values:
+The isolated browser was enabled with these values:
 
 ```bash
-openclaw config set \
-  agents.defaults.sandbox.browser.enabled \
-  true \
-  --strict-json
+openclaw config set agents.defaults.sandbox.browser.enabled true --strict-json
 
 openclaw config set \
   agents.defaults.sandbox.browser.image \
@@ -120,20 +117,17 @@ openclaw config set \
 
 Important controls:
 
-- `allowHostControl: false` prevents Forge from targeting the normal Ubuntu browser.
-- The dedicated Docker network separates the browser from the normal command-sandbox network.
-- `autoStart: true` creates and starts the browser container when Forge first calls the browser tool.
-- noVNC is enabled for optional observation without merging the browser into the host profile.
+- `allowHostControl: false` prevents Forge from targeting the personal Ubuntu browser.
+- The dedicated Docker network separates browser automation from the command sandbox.
+- `autoStart: true` creates the browser container when Forge first calls the browser tool.
+- noVNC allows optional observation without merging the browser into the host profile.
 
 ## Tool-policy configuration
 
 The browser tool had to pass two policy gates:
 
 ```bash
-openclaw config set \
-  tools.alsoAllow \
-  '["browser"]' \
-  --strict-json
+openclaw config set tools.alsoAllow '["browser"]' --strict-json
 
 openclaw config set \
   tools.sandbox.tools.alsoAllow \
@@ -144,17 +138,9 @@ openclaw config validate
 openclaw gateway restart
 ```
 
-`openclaw sandbox explain --session agent:main:main` then listed:
+A fresh TUI session then exposed `browser` alongside `web_search` and `web_fetch`.
 
-```text
-web_search
-web_fetch
-browser
-```
-
-## First browser test
-
-A fresh TUI session was used so the updated tool definition would be injected.
+## Browser test
 
 Forge was instructed to use only the browser tool and:
 
@@ -177,6 +163,8 @@ Browser type: sandbox browser
 
 ## Browser runtime validation
 
+Commands:
+
 ```bash
 openclaw sandbox list --browser
 
@@ -184,7 +172,7 @@ docker ps --format \
   'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Networks}}'
 ```
 
-Observed browser runtime:
+Observed runtime:
 
 ```text
 Container: openclaw-sbx-browser-agent-main-f331f052
@@ -196,22 +184,25 @@ noVNC:     32768
 Session:   agent:main
 ```
 
-The normal command sandbox remained a separate container on the Docker `bridge` network.
+The normal command sandbox remained a separate container on Docker's `bridge` network.
 
 ## Mount-isolation validation
 
-The browser container mounts were inspected with:
+The browser container mounts were inspected directly:
 
 ```bash
 docker inspect "$BROWSER_CONTAINER" \
-  --format '{{range .Mounts}}{{println .Source "->" .Destination}}{{end}}'
+  --format '{{range .Mounts}}{{println .Source "->" .Destination "(" .RW ")"}}{{end}}'
 ```
 
 Observed mounts:
 
 ```text
-~/.openclaw/workspace -> /workspace
-~/.openclaw/sandbox/skills-workspaces/.../skills -> /workspace/.openclaw/sandbox-skills/skills
+~/.openclaw/workspace
+  -> /workspace (read/write)
+
+~/.openclaw/sandbox/skills-workspaces/.../skills
+  -> /workspace/.openclaw/sandbox-skills/skills (read-only)
 ```
 
 No personal browser or credential locations were mounted, including:
@@ -222,9 +213,15 @@ No personal browser or credential locations were mounted, including:
 ~/.mozilla
 password-manager data
 Dual_Boot_Share
+Forge_Shared
 ```
 
-This confirms the browser is isolated from the personal browser profile and unrelated host data.
+After controlled shared-folder access was added to the command sandbox, browser binds were explicitly set to `[]`. Direct container tests later confirmed:
+
+```text
+PASS: browser cannot see Forge_Shared
+PASS: browser cannot see Dual_Boot_Share
+```
 
 ## Screenshot validation
 
@@ -280,9 +277,9 @@ Final result:
 
 ### Critical: small model with web tools
 
-OpenClaw classifies `qwen3-coder:30b` as a small model for untrusted web input while `web_search` and `web_fetch` are enabled.
+OpenClaw classifies `qwen3-coder:30b` as a small model for untrusted web input while web tools are enabled.
 
-This is not a container escape report. It is a prompt-injection and tool-misuse warning. A malicious webpage or search result could attempt to manipulate the model into misusing tools that the model legitimately possesses.
+This is a prompt-injection and tool-misuse warning, not a reported container escape. A malicious webpage or search result could attempt to manipulate the model into misusing tools that it legitimately possesses.
 
 Accepted residual-risk controls:
 
@@ -293,9 +290,9 @@ Accepted residual-risk controls:
 - Separate Docker browser sandbox
 - Host-browser control disabled
 - No personal browser profile mounted
-- No unrelated host files mounted
+- Browser has no external shared-data bind
 - Approval-controlled command execution
-- No secrets stored in `/workspace`
+- No secrets stored in `/workspace` or `Forge_Shared`
 
 Operational restrictions:
 
@@ -303,7 +300,7 @@ Operational restrictions:
 - Do not use it for personal email.
 - Do not sign into password managers.
 - Do not use sensitive cloud, network, identity, or production administration accounts.
-- Treat all webpage and search-result content as untrusted input.
+- Treat webpage and search-result content as untrusted input.
 
 ### Warning: trusted proxies missing
 
@@ -330,20 +327,20 @@ searxng-plugin.json
 security-audit.txt
 ```
 
-These files have not been committed automatically. Review them for tokens, secrets, private paths, and unnecessary runtime identifiers before adding selected evidence to a public repository.
+These files were not committed automatically. Review them for tokens, secrets, private paths, and unnecessary runtime identifiers before adding selected evidence to a public repository.
 
-## Memory-update status
+## Durable-memory status
 
-The attempted Forge memory update did not complete.
+The first Forge request to update durable memory did not complete. Direct Ubuntu verification caught the mismatch before it was treated as successful.
 
-Direct Ubuntu verification showed:
+The memory checkpoint was then repaired directly from Ubuntu:
 
-```text
-MEMORY.md still names the managed browser as the next task.
-memory/2026-07-28.md does not exist.
-```
+- The original `MEMORY.md` was backed up.
+- The `Current Project Checkpoint` section was updated.
+- `memory/2026-07-28.md` was created and verified.
+- Durable memory was later updated again after the controlled-share milestone.
 
-This is a pending documentation task, not a managed-browser failure.
+Current durable memory now identifies trusted-LAN access as the next phase.
 
 ## Rollback
 
@@ -372,7 +369,7 @@ openclaw config validate
 openclaw gateway restart
 ```
 
-Remove the browser image only after browser containers are stopped and the rollback is intentional:
+Remove the browser image only after browser containers are stopped and rollback is intentional:
 
 ```bash
 docker image rm openclaw-sandbox-browser:bookworm-slim
@@ -380,4 +377,4 @@ docker image rm openclaw-sandbox-browser:bookworm-slim
 
 ## Next task
 
-Repair the durable-memory checkpoint, then create a dedicated `Forge_Shared` folder on `Dual_Boot_Share` and expose only that folder to the command sandbox. The browser sandbox should not inherit the shared-data mount.
+The controlled `Forge_Shared` phase is documented in `16-controlled-shared-folder-access.md` and is complete. The next phase is network inventory followed by authenticated trusted-LAN Gateway access without public port forwarding.
