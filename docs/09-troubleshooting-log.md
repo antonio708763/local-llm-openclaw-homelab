@@ -232,15 +232,107 @@ The unpinned-plugin warning disappeared from the next deep audit.
 
 ## Managed-browser memory update did not complete
 
-After the browser milestone, the direct Ubuntu verification showed:
+After the browser milestone, the first direct Ubuntu verification showed:
 
 - `MEMORY.md` still named managed-browser configuration as the next task.
 - `memory/2026-07-28.md` did not exist.
 
-This means the Forge write request did not complete even though the rest of the local evidence bundle was created.
+The Forge request had not completed even though the local evidence bundle was created.
 
-Required follow-up:
+Resolution:
 
-1. Retry the memory write in a fresh TUI session.
-2. Explicitly require the `read`, `write`, or `edit` tools.
-3. Verify both files directly from Ubuntu before declaring the memory checkpoint complete.
+1. Back up the existing `MEMORY.md`.
+2. Update only the `Current Project Checkpoint` section from Ubuntu with a small Python script.
+3. Create `memory/2026-07-28.md` directly.
+4. Verify both files with `grep`, `cat`, and `ls`.
+
+The repair succeeded. The backup was preserved as:
+
+```text
+~/.openclaw/workspace/MEMORY.md.before-managed-browser-update.bak
+```
+
+## Old TUI session exceeded the model context window
+
+During the first controlled-share test, the TUI ended with:
+
+```text
+run error: LLM request failed
+tokens 119k/33k (365%)
+```
+
+This was not a filesystem or bind-mount failure. The old session had accumulated far more history than the 32,768-token model could process.
+
+Resolution:
+
+1. Open the TUI.
+2. Use `/new` to create a fresh session.
+3. Repeat only the short validation commands.
+
+The fresh session completed the controlled-share tests successfully.
+
+## Sandbox recreate reported no matching runtimes
+
+The command and browser sandbox runtimes were removed successfully on the first recreate pass. The same recreate commands were then run a second time and reported:
+
+```text
+No sandbox runtimes found matching the criteria.
+```
+
+This was harmless. There were no old containers left to remove, and OpenClaw recreated the runtimes automatically when Forge next used the exec and browser tools.
+
+## External bind required explicit opt-in
+
+`Forge_Shared` is outside `~/.openclaw/workspace`, so the command sandbox required explicit permission to use an external bind source:
+
+```bash
+openclaw config set \
+  agents.defaults.sandbox.docker.dangerouslyAllowExternalBindSources \
+  true \
+  --strict-json
+```
+
+Only the dedicated directory was then mounted:
+
+```bash
+openclaw config set \
+  agents.defaults.sandbox.docker.binds \
+  '["/mnt/Dual_Boot_Share/Forge_Shared:/forge-share:rw"]' \
+  --strict-json
+```
+
+The dangerous-sounding option does not itself mount a drive. It permits the explicitly configured external source. The safety boundary depends on keeping the bind list narrow.
+
+## Browser could have inherited command-sandbox binds
+
+The command sandbox needed `Forge_Shared`, but the browser did not.
+
+Resolution: explicitly set the browser bind list to an empty array instead of relying on defaults:
+
+```bash
+openclaw config set \
+  agents.defaults.sandbox.browser.binds \
+  '[]' \
+  --strict-json
+```
+
+Direct mount inspection and container-level path tests later confirmed that the browser could not see `/forge-share` or `/mnt/Dual_Boot_Share`.
+
+## Controlled-share validation
+
+The final validation proved:
+
+```text
+PASS_ENTIRE_SHARE_HIDDEN
+PASS_HOST_HOME_HIDDEN
+PASS: browser cannot see Forge_Shared
+PASS: browser cannot see Dual_Boot_Share
+```
+
+The command container had exactly one external data mount:
+
+```text
+/mnt/Dual_Boot_Share/Forge_Shared -> /forge-share (read/write)
+```
+
+The browser container had no external data mount.
