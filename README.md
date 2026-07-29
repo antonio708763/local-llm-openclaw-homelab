@@ -182,6 +182,10 @@ The Gateway, Ollama, and SearXNG remain loopback-only. The Gateway has not been 
 - [x] Enabled user lingering for pre-login operation
 - [x] Rebooted the client and confirmed the tunnel automatically returned
 - [x] Confirmed the dashboard, existing Forge chat, and durable memory remain accessible after reboot
+- [x] Confirmed the tunnel automatically recovers after the Alienware disconnects and reconnects to Wi-Fi
+- [x] Tuned SSH retry behavior with `ConnectTimeout 10` and `ConnectionAttempts 1`
+- [x] Tuned systemd recovery behavior with `Restart=on-failure` and `RestartSec=30`
+- [x] Preserved pre-tuning backups of the SSH profile and systemd user unit on the client
 
 ## Validated results
 
@@ -200,6 +204,10 @@ Trusted client:            user-Alienware-15-R3
 Client forwarded bind:     127.0.0.1:18789
 Tunnel service:            forge-gateway-tunnel.service
 Tunnel after reboot:       enabled and active
+Tunnel after Wi-Fi loss:   recovered automatically
+Tunnel restart policy:     on-failure, 30-second delay
+SSH connection timeout:    10 seconds
+SSH connection attempts:   1 per service start
 Dashboard through tunnel:  HTTP/1.1 200 OK
 Exec host:                 sandbox
 Exec security:             allowlist
@@ -246,21 +254,21 @@ The trusted-client tunnel adds SSH as a LAN-facing service. SSH password authent
 
 ## Current checkpoint
 
-The first trusted Linux client milestone is complete. The Alienware client now reaches the loopback-only Forge Gateway through a dedicated-key SSH tunnel maintained by a systemd user service. The tunnel survived a client reboot, returned HTTP 200, and allowed token-authenticated access to the existing Forge chat and durable memory.
+The first trusted Linux client milestone now includes automatic recovery after client reboot and after a controlled Wi-Fi interruption. The Alienware reaches the loopback-only Forge Gateway through a dedicated-key SSH tunnel maintained by a lingering systemd user service. The final retry policy uses bounded SSH connection attempts and a 30-second systemd delay, preventing the rapid retry storm observed during an extended outage.
 
-OpenClaw, Ollama, and SearXNG remain loopback-only, and no public port forwarding or direct Gateway LAN bind has been introduced.
+The tunnel is active, the client loopback listener is owned by SSH, and the remote dashboard returns HTTP 200. OpenClaw, Ollama, and SearXNG remain loopback-only, and no public port forwarding or direct Gateway LAN bind has been introduced.
 
 ## Next tasks
 
-1. Test automatic tunnel recovery after disconnecting and reconnecting the Alienware Wi-Fi.
-2. Test automatic recovery after restarting the Forge host or its SSH service.
-3. Confirm emergency key access, then disable SSH password authentication.
-4. Evaluate a dedicated restricted account for tunnel-only access.
-5. Restrict SSH ingress with UFW and OPNsense.
-6. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
-7. Review and deliberately select SearXNG upstream engines.
-8. Audit NetBird for encrypted remote access without public port forwarding.
-9. Begin controlled management of a lab computer.
+1. Test automatic tunnel recovery after a controlled Forge-host reboot or SSH-service restart.
+2. Confirm emergency key access, then disable SSH password authentication.
+3. Evaluate a dedicated restricted account for tunnel-only access.
+4. Restrict SSH ingress with UFW and OPNsense.
+5. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
+6. Review and deliberately select SearXNG upstream engines.
+7. Audit NetBird for encrypted remote access without public port forwarding.
+8. Begin controlled management of a lab computer.
+9. Design a separate high-trust OpenClaw instance for `ollama/hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M`, with explicit approval before high-impact actions and remote control limited to a deliberately selected lab computer.
 
 ## Repository map
 
@@ -310,3 +318,4 @@ OpenClaw, Ollama, and SearXNG remain loopback-only, and no public port forwardin
 12. Test infrastructure changes against lab systems first.
 13. Do not commit tokens, API keys, SearXNG secret keys, or `openclaw.json` secrets.
 14. Keep documentation and change history in Git.
+15. Keep any future unsandboxed or high-trust agent separate from Forge, scoped to a dedicated lab computer, and approval-gated for high-impact actions.
