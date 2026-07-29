@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026-07-29
+
+### Completed
+
+- Repeated the Alienware Wi-Fi interruption test while both the client and Forge host were awake and healthy.
+- Confirmed the persistent SSH tunnel automatically returned after Wi-Fi reconnected.
+- Confirmed `forge-gateway-tunnel.service` returned to `active/running` with a new SSH process.
+- Confirmed client loopback port `18789` was restored and owned by the SSH process.
+- Confirmed the remote OpenClaw dashboard returned `HTTP/1.1 200 OK` after recovery.
+- Added `ConnectTimeout 10` and `ConnectionAttempts 1` to the trusted-client SSH profile.
+- Changed the tunnel service from `Restart=always` to `Restart=on-failure`.
+- Increased the systemd restart delay from 10 seconds to 30 seconds.
+- Verified the effective systemd policy reports `Restart=on-failure` and `RestartUSec=30s`.
+- Preserved local pre-tuning backups of the SSH profile and systemd user unit.
+- Updated `docs/17-trusted-linux-client-ssh-tunnel.md` with the validated recovery procedure and final retry policy.
+
+### Pending
+
+- Test automatic tunnel recovery after a controlled Forge-host reboot or SSH-service restart.
+- Confirm emergency key access, then disable SSH password authentication.
+- Evaluate a dedicated restricted tunnel account.
+- Restrict SSH ingress with UFW and OPNsense.
+- Confirm Guest and IoT VLANs cannot reach the Forge host SSH service.
+- Review and deliberately select SearXNG upstream engines.
+- Audit NetBird for encrypted remote access.
+- Begin controlled management of a lab computer.
+- Design a separate high-trust OpenClaw instance for `ollama/hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M`, with explicit approval before high-impact actions and access limited to a deliberately selected lab computer.
+
+### Current checkpoint
+
+The trusted Alienware tunnel now survives both a client reboot and a controlled Wi-Fi interruption. Retry behavior is bounded by a 10-second SSH connection timeout, one connection attempt per systemd service start, and a 30-second `Restart=on-failure` delay. The Gateway, Ollama, and SearXNG remain loopback-only, and the remote dashboard continues to require both SSH key authentication and the OpenClaw Gateway token.
+
 ## 2026-07-28
 
 ### Added
