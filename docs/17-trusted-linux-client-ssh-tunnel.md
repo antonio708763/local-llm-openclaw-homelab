@@ -121,9 +121,13 @@ Host forge-gateway
     IdentitiesOnly yes
     LocalForward 18789 127.0.0.1:18789
     ExitOnForwardFailure yes
+    ConnectTimeout 10
+    ConnectionAttempts 1
     ServerAliveInterval 30
     ServerAliveCountMax 3
 ```
+
+The timeout and single-attempt settings make a failed connection return promptly to systemd instead of leaving a long-lived SSH attempt hanging while the network or Forge host is unavailable.
 
 Permissions:
 
@@ -135,7 +139,7 @@ Configuration inspection:
 
 ```bash
 ssh -G forge-gateway | grep -E \
-'^(hostname|user|identityfile|localforward|exitonforwardfailure|serveraliveinterval)'
+'^(hostname|user|identityfile|localforward|exitonforwardfailure|connecttimeout|connectionattempts|serveraliveinterval|serveralivecountmax)'
 ```
 
 ## Manual tunnel test
@@ -213,12 +217,14 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 ExecStart=/usr/bin/ssh -N -T -o BatchMode=yes forge-gateway
-Restart=always
-RestartSec=10
+Restart=on-failure
+RestartSec=30
 
 [Install]
 WantedBy=default.target
 ```
+
+`Restart=on-failure` avoids restarting after an intentional clean stop, while `RestartSec=30` prevents rapid retry storms when Wi-Fi or the Forge host is unavailable.
 
 Enable and start it:
 
@@ -264,6 +270,78 @@ Remote dashboard response: HTTP/1.1 200 OK
 
 The Control UI loaded after reboot, accepted the Forge Gateway token, and successfully opened the existing Forge chat and durable memory content.
 
+## Wi-Fi interruption and automatic recovery
+
+A controlled client-side Wi-Fi interruption was performed while both systems were awake and the tunnel was healthy.
+
+Before the interruption:
+
+```bash
+systemctl --user show forge-gateway-tunnel.service \
+  -p ActiveState \
+  -p SubState \
+  -p MainPID \
+  -p NRestarts
+
+ss -ltnp | grep ':18789'
+curl -I --max-time 10 http://127.0.0.1:18789/
+```
+
+The Alienware Wi-Fi radio was then disabled and re-enabled. After NetworkManager reported the wireless interface connected again, the local tunnel endpoint was polled until it returned successfully.
+
+Validated result:
+
+```text
+Forge tunnel recovered automatically.
+Service state: active/running
+Client loopback listener: restored and owned by ssh
+Remote dashboard response: HTTP/1.1 200 OK
+```
+
+The test also showed why bounded retry behavior matters. During an earlier extended outage, the previous 10-second unconditional restart policy generated hundreds of restart attempts. The final configuration uses a 10-second SSH connection timeout, one SSH connection attempt per service start, and a 30-second systemd restart delay.
+
+## Retry-policy verification and backups
+
+Effective systemd policy:
+
+```bash
+systemctl --user show \
+  forge-gateway-tunnel.service \
+  -p Restart \
+  -p RestartUSec
+```
+
+Validated result:
+
+```text
+Restart=on-failure
+RestartUSec=30s
+```
+
+Saved unit values:
+
+```bash
+grep -E \
+'^(Restart|RestartSec)=' \
+~/.config/systemd/user/forge-gateway-tunnel.service
+```
+
+Validated result:
+
+```text
+Restart=on-failure
+RestartSec=30
+```
+
+Before tuning, both client configuration files were backed up locally:
+
+```text
+~/.config/systemd/user/forge-gateway-tunnel.service.before-retry-tuning.bak
+~/.ssh/config.before-retry-tuning.bak
+```
+
+These files contain no Gateway token or private-key material, but they remain client-local and are not committed to Git.
+
 ## Security properties
 
 - The OpenClaw Gateway remains bound only to `127.0.0.1` on the Forge host.
@@ -273,17 +351,18 @@ The Control UI loaded after reboot, accepted the Forge Gateway token, and succes
 - The forwarded client socket is also loopback-only.
 - OpenClaw token authentication remains enabled as a second authentication layer.
 - The trusted client does not need Ollama, SearXNG, or the model port exposed to it.
+- Bounded SSH and systemd retries reduce needless connection churn during outages.
 - The client key grants SSH access to the `antonio` account, so SSH hardening is the next security priority.
 
 ## Remaining hardening
 
-The first trusted-client milestone is complete, but Phase 7 is not fully complete until these items are addressed:
+The first trusted-client milestone and Wi-Fi recovery test are complete, but Phase 7 is not fully complete until these items are addressed:
 
-1. Disable SSH password authentication after confirming emergency key access.
-2. Consider a dedicated restricted account for tunnel-only use instead of the administrator account.
-3. Restrict SSH ingress with UFW and OPNsense to the trusted LAN or approved client addresses.
-4. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
-5. Test automatic tunnel recovery after Wi-Fi loss and Forge-host restart.
+1. Test automatic recovery after a controlled Forge-host reboot or SSH-service restart.
+2. Disable SSH password authentication after confirming emergency key access.
+3. Consider a dedicated restricted account for tunnel-only use instead of the administrator account.
+4. Restrict SSH ingress with UFW and OPNsense to the trusted LAN or approved client addresses.
+5. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
 6. Decide whether the local client should use a different port if its own OpenClaw Gateway is restored later.
 7. Audit NetBird before enabling encrypted access from outside the home LAN.
 
@@ -305,6 +384,15 @@ Logs:
 
 ```bash
 journalctl --user -u forge-gateway-tunnel.service -n 100 --no-pager
+```
+
+Verify the active retry policy:
+
+```bash
+systemctl --user show \
+  forge-gateway-tunnel.service \
+  -p Restart \
+  -p RestartUSec
 ```
 
 Stop temporarily:
