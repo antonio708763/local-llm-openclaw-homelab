@@ -192,3 +192,27 @@ Status: **Not started**
 - [ ] Add command allowlists and approvals
 - [ ] Verify logging and rollback
 - [ ] Expand permissions only after repeated successful lab tests
+
+## Phase 10 — Separate abliterated OpenClaw instance and remote computer control
+
+Status: **Deferred until Phases 7 through 9 establish reliable access, approvals, logging, and rollback**
+
+Requested model:
+
+```text
+ollama/hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M
+```
+
+- [ ] Pull and validate the model separately without replacing Forge's current model
+- [ ] Create a completely separate OpenClaw instance, workspace, identity, Gateway port, service, and durable memory
+- [ ] Prevent the experimental instance from inheriting Forge credentials, browser profiles, tokens, or production configuration
+- [ ] Evaluate the requested host-command execution mode without the Docker command sandbox
+- [ ] Enforce explicit approval before privileged, destructive, broad, persistent, security-sensitive, or high-blast-radius actions
+- [ ] Require the agent to describe the exact command, target, expected changes, affected files or services, and rollback plan before approval
+- [ ] Define what counts as a major action so approval behavior is deterministic rather than discretionary
+- [ ] Add complete command logging and a visible audit trail
+- [ ] Provide a hard stop and emergency-disable procedure independent of the model
+- [ ] Establish authenticated access from another trusted computer without public port forwarding
+- [ ] Create a dedicated remote-control account and test against a disposable lab computer first
+- [ ] Grant full control only after repeated approval, recovery, and rollback tests succeed
+- [ ] Document the residual risk of using an abliterated model with direct host and remote-computer control
