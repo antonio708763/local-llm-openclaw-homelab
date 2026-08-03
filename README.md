@@ -252,6 +252,20 @@ The managed browser must not be used for banking, personal email, password manag
 
 The trusted-client tunnel adds SSH as a LAN-facing service. SSH password authentication is still enabled and must be hardened before Phase 7 is treated as complete.
 
+## Planned inference-engine migration
+
+The current deployment continues to use Ollama because its service management, model pulling, API, and OpenClaw integration keep the present build simple and reproducible.
+
+A future milestone is to transition the inference backend to a standalone `llama.cpp` server after side-by-side validation. This is not based on a finding that Ollama is inherently untrustworthy. The goal is to reduce abstraction and gain:
+
+- More direct visibility into the upstream inference runtime.
+- Finer control over build flags, context and KV-cache settings, batching, GPU offload, and server options.
+- Earlier access to upstream `llama.cpp` fixes and optimizations.
+- Easier low-level debugging and performance comparison.
+- A smaller and more directly auditable inference stack.
+
+The migration must preserve loopback-only binding, OpenClaw compatibility, model quality, context length, GPU acceleration, automatic startup, recovery behavior, and a tested rollback path to Ollama. Ollama remains the active runtime until the standalone `llama.cpp` deployment passes those checks.
+
 ## Current checkpoint
 
 The first trusted Linux client milestone now includes automatic recovery after client reboot and after a controlled Wi-Fi interruption. The Alienware reaches the loopback-only Forge Gateway through a dedicated-key SSH tunnel maintained by a lingering systemd user service. The final retry policy uses bounded SSH connection attempts and a 30-second systemd delay, preventing the rapid retry storm observed during an extended outage.
@@ -269,6 +283,7 @@ The tunnel is active, the client loopback listener is owned by SSH, and the remo
 7. Audit NetBird for encrypted remote access without public port forwarding.
 8. Begin controlled management of a lab computer.
 9. Design a separate high-trust OpenClaw instance for `ollama/hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M`, with explicit approval before high-impact actions and remote control limited to a deliberately selected lab computer.
+10. Benchmark Ollama against a standalone `llama.cpp` server, then transition the inference backend after compatibility, performance, security, startup, recovery, and rollback validation succeeds.
 
 ## Repository map
 
