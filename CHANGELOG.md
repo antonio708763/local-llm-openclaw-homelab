@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-03
+
+### Planned
+
+- Added a future milestone to transition the inference backend from Ollama to a standalone `llama.cpp` server.
+- Kept Ollama as the active runtime until a side-by-side migration test is complete.
+- Recorded the migration goals: fewer abstraction layers, more direct runtime visibility, finer control over inference and GPU settings, earlier access to upstream optimizations, easier low-level debugging, and a smaller auditable inference stack.
+- Required the future migration to preserve OpenClaw compatibility, loopback-only exposure, model quality, context length, GPU acceleration, automatic startup, recovery behavior, and a tested rollback path to Ollama.
+- Added the Ollama-to-`llama.cpp` benchmark and transition to the project task list.
+
 ## 2026-07-29
 
 ### Completed
