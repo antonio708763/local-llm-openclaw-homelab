@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-08-05
+
+### Completed
+
+- Confirmed the Forge host automatically restored OpenSSH, Ollama, and the loopback-only OpenClaw Gateway after a controlled host reboot.
+- Confirmed the Alienware client detected the Forge-host outage and restored its persistent SSH local-forward tunnel without manual intervention.
+- Verified the client tunnel PID changed from `5875` to `8731` and the dashboard returned `HTTP/1.1 200 OK` after the Forge host returned.
+- Determined that restarting the Forge host's SSH listener alone may not terminate an already-established SSH session, so that test is not a reliable simulation of tunnel failure.
+- Identified and deliberately terminated the server-side `sshd` process handling the Alienware tunnel connection.
+- Confirmed `forge-gateway-tunnel.service` detected the dead session and replaced the client SSH process automatically.
+- Verified the client tunnel PID changed from `10466` to `13456`, `NRestarts` increased from `16` to `17`, the loopback listener returned, and the dashboard again returned `HTTP/1.1 200 OK`.
+- Marked Wi-Fi interruption, Forge-host reboot, and established SSH-session termination recovery tests complete.
+- Updated the trusted-client tunnel documentation, implementation roadmap, and validation checklist.
+
+### Current checkpoint
+
+The persistent trusted-client tunnel is now validated across client reboot, Wi-Fi interruption, Forge-host reboot, and abrupt established-session termination. The Gateway, Ollama, and SearXNG remain loopback-only. The next Phase 7 task is to confirm emergency key access and disable SSH password authentication before tightening SSH ingress with UFW and OPNsense.
+
 ## 2026-08-03
 
 ### Planned
