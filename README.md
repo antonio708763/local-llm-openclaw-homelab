@@ -186,6 +186,14 @@ The Gateway, Ollama, and SearXNG remain loopback-only. The Gateway has not been 
 - [x] Tuned SSH retry behavior with `ConnectTimeout 10` and `ConnectionAttempts 1`
 - [x] Tuned systemd recovery behavior with `Restart=on-failure` and `RestartSec=30`
 - [x] Preserved pre-tuning backups of the SSH profile and systemd user unit on the client
+- [x] Confirmed automatic tunnel recovery after a controlled Forge-host reboot
+- [x] Confirmed automatic tunnel recovery after terminating the established server-side SSH session
+- [x] Confirmed emergency access with the dedicated Alienware key before hardening
+- [x] Created a root-only OpenSSH configuration backup
+- [x] Disabled SSH password and keyboard-interactive authentication
+- [x] Confirmed the server offers only public-key authentication
+- [x] Reloaded SSH successfully without rebooting the Forge host
+- [x] Restarted and validated the persistent OpenClaw tunnel under the key-only policy
 
 ## Validated results
 
@@ -200,11 +208,19 @@ Gateway authentication:    token
 Forge host LAN address:    192.168.110.187
 LAN access method:         SSH local forwarding
 Forge host SSH port:       22
+SSH authentication:        public key only
+PasswordAuthentication:    no
+KbdInteractiveAuth:        no
+PermitEmptyPasswords:      no
+PermitRootLogin:            without-password, inherited Ubuntu policy
+SSH hardening drop-in:      /etc/ssh/sshd_config.d/00-openclaw-key-only.conf
 Trusted client:            user-Alienware-15-R3
 Client forwarded bind:     127.0.0.1:18789
 Tunnel service:            forge-gateway-tunnel.service
 Tunnel after reboot:       enabled and active
 Tunnel after Wi-Fi loss:   recovered automatically
+Tunnel after host reboot:  recovered automatically
+Tunnel after dead session: recovered automatically
 Tunnel restart policy:     on-failure, 30-second delay
 SSH connection timeout:    10 seconds
 SSH connection attempts:   1 per service start
@@ -250,7 +266,7 @@ The trusted-proxies warning requires no action until a reverse proxy is delibera
 
 The managed browser must not be used for banking, personal email, password managers, or sensitive administrative accounts.
 
-The trusted-client tunnel adds SSH as a LAN-facing service. SSH password authentication is still enabled and must be hardened before Phase 7 is treated as complete.
+SSH password and keyboard-interactive authentication are now disabled. The remaining trusted-client risks are that the tunnel authenticates as the normal `antonio` administrator account, SSH is not yet restricted by UFW and OPNsense, Guest and IoT VLAN reachability has not yet been tested, and the inherited `PermitRootLogin without-password` policy still permits root key authentication.
 
 ## Planned inference-engine migration
 
@@ -268,21 +284,23 @@ The migration must preserve loopback-only binding, OpenClaw compatibility, model
 
 ## Current checkpoint
 
-The first trusted Linux client milestone now includes automatic recovery after client reboot and after a controlled Wi-Fi interruption. The Alienware reaches the loopback-only Forge Gateway through a dedicated-key SSH tunnel maintained by a lingering systemd user service. The final retry policy uses bounded SSH connection attempts and a 30-second systemd delay, preventing the rapid retry storm observed during an extended outage.
+The trusted Alienware access path now uses public-key-only SSH authentication. Emergency access with the dedicated key was verified before hardening, a root-only OpenSSH backup was created, the key-only policy was loaded through `/etc/ssh/sshd_config.d/00-openclaw-key-only.conf`, and a no-key connection confirmed that the server offers only `publickey` authentication.
 
-The tunnel is active, the client loopback listener is owned by SSH, and the remote dashboard returns HTTP 200. OpenClaw, Ollama, and SearXNG remain loopback-only, and no public port forwarding or direct Gateway LAN bind has been introduced.
+The persistent tunnel was restarted under the new policy and returned with a new SSH PID, an active systemd user service, loopback listeners on port `18789`, and an `HTTP/1.1 200 OK` response from the remote OpenClaw dashboard. Recovery has now been validated after client reboot, Wi-Fi loss, Forge-host reboot, and established-session termination.
+
+OpenClaw, Ollama, and SearXNG remain loopback-only. No public port forwarding or direct Gateway LAN bind has been introduced.
 
 ## Next tasks
 
-1. Test automatic tunnel recovery after a controlled Forge-host reboot or SSH-service restart.
-2. Confirm emergency key access, then disable SSH password authentication.
-3. Evaluate a dedicated restricted account for tunnel-only access.
-4. Restrict SSH ingress with UFW and OPNsense.
-5. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
-6. Review and deliberately select SearXNG upstream engines.
-7. Audit NetBird for encrypted remote access without public port forwarding.
-8. Begin controlled management of a lab computer.
-9. Design a separate high-trust OpenClaw instance for `ollama/hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M`, with explicit approval before high-impact actions and remote control limited to a deliberately selected lab computer.
+1. Evaluate and build a dedicated restricted account for tunnel-only access.
+2. Restrict SSH ingress with UFW and OPNsense.
+3. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
+4. Decide whether to change the inherited root policy from `PermitRootLogin without-password` to `PermitRootLogin no`.
+5. Review and deliberately select SearXNG upstream engines.
+6. Audit NetBird for encrypted remote access without public port forwarding.
+7. Begin controlled management of a lab computer.
+8. Design a separate high-trust OpenClaw instance for `ollama/hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M`, with explicit approval before high-impact actions and remote control limited to a deliberately selected lab computer.
+9. Add and evaluate Qwen3.6-27B as a future model option.
 10. Benchmark Ollama against a standalone `llama.cpp` server, then transition the inference backend after compatibility, performance, security, startup, recovery, and rollback validation succeeds.
 
 ## Repository map
@@ -309,7 +327,8 @@ The tunnel is active, the client loopback listener is owned by SSH, and the remo
 │   ├── 14-searxng-compaction-and-memory.md
 │   ├── 15-managed-browser-and-security-audit.md
 │   ├── 16-controlled-shared-folder-access.md
-│   └── 17-trusted-linux-client-ssh-tunnel.md
+│   ├── 17-trusted-linux-client-ssh-tunnel.md
+│   └── 18-ssh-key-only-hardening.md
 ├── docker/
 │   └── openclaw-sandbox/
 │       └── Dockerfile
