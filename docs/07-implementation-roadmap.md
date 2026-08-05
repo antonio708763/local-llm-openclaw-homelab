@@ -142,7 +142,7 @@ Status: **Complete**
 
 ## Phase 7 — Trusted-LAN access
 
-Status: **In progress — first trusted Linux client validated**
+Status: **In progress — trusted-client connectivity and recovery validated**
 
 - [x] Inventory Ubuntu interfaces, routes, Gateway settings, listening sockets, and firewall state
 - [x] Reserve the Forge host at `192.168.110.187`
@@ -164,12 +164,13 @@ Status: **In progress — first trusted Linux client validated**
 - [x] Enable systemd user lingering on the client
 - [x] Reboot the client and confirm automatic tunnel restoration
 - [x] Confirm the client can open the existing Forge chat and durable memory
+- [x] Test tunnel recovery after Wi-Fi interruption
+- [x] Test tunnel recovery after a Forge-host restart
+- [x] Test recovery after terminating the established server-side SSH tunnel process
 - [ ] Disable SSH password authentication after recovery access is confirmed
 - [ ] Evaluate a dedicated restricted tunnel account
 - [ ] Restrict SSH ingress with UFW and OPNsense
 - [ ] Confirm Guest and IoT VLANs cannot reach the Forge host SSH service
-- [ ] Test tunnel recovery after Wi-Fi interruption
-- [ ] Test tunnel recovery after a Forge-host restart
 
 ## Phase 8 — Remote access
 
