@@ -300,6 +300,53 @@ Remote dashboard response: HTTP/1.1 200 OK
 
 The test also showed why bounded retry behavior matters. During an earlier extended outage, the previous 10-second unconditional restart policy generated hundreds of restart attempts. The final configuration uses a 10-second SSH connection timeout, one SSH connection attempt per service start, and a 30-second systemd restart delay.
 
+## Forge-host reboot and automatic recovery
+
+A controlled reboot of the Forge host was performed while the Alienware tunnel service remained enabled and running.
+
+Before the reboot, the Forge host reported SSH, Ollama, and the OpenClaw Gateway as enabled and active. After reboot, all three services returned automatically and listened on their intended interfaces:
+
+```text
+SSH: active on TCP 22
+Ollama: active on 127.0.0.1:11434
+OpenClaw Gateway: active on 127.0.0.1:18789
+```
+
+The client detected the outage, retried according to the bounded systemd policy, and recovered without manual intervention.
+
+Validated client result:
+
+```text
+Outage detected.
+Tunnel recovered after Forge-host reboot.
+Tunnel PID changed from 5875 to 8731.
+NRestarts increased from 1 to 4.
+Service state: active/running
+Client loopback listener: restored and owned by ssh
+Remote dashboard response: HTTP/1.1 200 OK
+```
+
+This confirms the complete path returns after the model host itself restarts, not merely after a client-side interruption.
+
+## Established tunnel termination and automatic recovery
+
+Restarting the Forge host's SSH listener did not reliably interrupt the existing tunnel because an already-established OpenSSH session may remain alive while the listening service is restarted. A test that waits only for `systemctl restart ssh` to break the tunnel can therefore wait indefinitely and does not prove failure recovery.
+
+To test the actual failure path, the server-side `sshd` process handling the Alienware connection was identified and terminated deliberately. This severed the established tunnel without changing the Gateway, model, or client configuration.
+
+Validated result:
+
+```text
+Original client tunnel PID: 10466
+Replacement client tunnel PID: 13456
+NRestarts increased from 16 to 17
+Service state: active/running
+Client loopback listener: restored on 127.0.0.1:18789 and [::1]:18789
+Remote dashboard response: HTTP/1.1 200 OK
+```
+
+This proves that `forge-gateway-tunnel.service` detects a dead SSH session, exits with failure, waits for the configured restart delay, starts a new SSH process, recreates the loopback forward, and restores dashboard access.
+
 ## Retry-policy verification and backups
 
 Effective systemd policy:
@@ -352,19 +399,19 @@ These files contain no Gateway token or private-key material, but they remain cl
 - OpenClaw token authentication remains enabled as a second authentication layer.
 - The trusted client does not need Ollama, SearXNG, or the model port exposed to it.
 - Bounded SSH and systemd retries reduce needless connection churn during outages.
+- Recovery is validated after a client reboot, Wi-Fi interruption, Forge-host reboot, and established SSH-session termination.
 - The client key grants SSH access to the `antonio` account, so SSH hardening is the next security priority.
 
 ## Remaining hardening
 
-The first trusted-client milestone and Wi-Fi recovery test are complete, but Phase 7 is not fully complete until these items are addressed:
+The trusted-client connectivity and recovery milestone is complete, but Phase 7 is not fully complete until these items are addressed:
 
-1. Test automatic recovery after a controlled Forge-host reboot or SSH-service restart.
-2. Disable SSH password authentication after confirming emergency key access.
-3. Consider a dedicated restricted account for tunnel-only use instead of the administrator account.
-4. Restrict SSH ingress with UFW and OPNsense to the trusted LAN or approved client addresses.
-5. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
-6. Decide whether the local client should use a different port if its own OpenClaw Gateway is restored later.
-7. Audit NetBird before enabling encrypted access from outside the home LAN.
+1. Disable SSH password authentication after confirming emergency key access.
+2. Consider a dedicated restricted account for tunnel-only use instead of the administrator account.
+3. Restrict SSH ingress with UFW and OPNsense to the trusted LAN or approved client addresses.
+4. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
+5. Decide whether the local client should use a different port if its own OpenClaw Gateway is restored later.
+6. Audit NetBird before enabling encrypted access from outside the home LAN.
 
 ## Useful operations
 
