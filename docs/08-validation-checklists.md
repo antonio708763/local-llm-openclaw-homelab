@@ -205,6 +205,7 @@
 - [x] OpenClaw Gateway remains bound to `127.0.0.1:18789`
 - [x] Ollama remains bound to loopback
 - [x] SearXNG remains bound to loopback
+- [x] SSH, Ollama, and the OpenClaw Gateway return automatically after a Forge-host reboot
 
 ### Trusted client
 
@@ -216,6 +217,8 @@
 - [x] `LocalForward 18789 127.0.0.1:18789` validated
 - [x] `ExitOnForwardFailure yes` enabled
 - [x] SSH keepalive settings configured
+- [x] `ConnectTimeout 10` configured
+- [x] `ConnectionAttempts 1` configured
 - [x] Conflicting older local OpenClaw Gateway stopped and disabled
 - [x] Client-side port `18789` became available
 - [x] Manual tunnel listener owned by `ssh`
@@ -228,6 +231,8 @@
 - [x] `forge-gateway-tunnel.service` created as a systemd user service
 - [x] Unit enabled and started
 - [x] Unit uses `BatchMode=yes`
+- [x] Unit uses `Restart=on-failure`
+- [x] Unit uses a 30-second restart delay
 - [x] Unit restarts automatically after failure
 - [x] User lingering enabled
 - [x] `Linger=yes` verified
@@ -235,8 +240,17 @@
 - [x] Tunnel service returned as enabled and active after reboot
 - [x] Loopback listener returned after reboot
 - [x] Dashboard returned HTTP 200 after reboot
-- [ ] Wi-Fi interruption recovery tested
-- [ ] Forge-host restart recovery tested
+- [x] Wi-Fi interruption recovery tested
+- [x] Tunnel recovered automatically after Wi-Fi returned
+- [x] Forge-host restart recovery tested
+- [x] Tunnel recovered automatically after the Forge host returned
+- [x] Established server-side SSH tunnel process terminated deliberately
+- [x] Client systemd service replaced the failed SSH process
+- [x] Tunnel PID changed from `10466` to `13456`
+- [x] `NRestarts` increased from `16` to `17`
+- [x] Loopback listener returned after tunnel-process replacement
+- [x] Dashboard returned HTTP 200 after tunnel-process replacement
+- [x] Documented that restarting the SSH listener may not terminate an existing SSH session
 
 ### Remaining SSH hardening
 
@@ -283,6 +297,9 @@
 - [x] First trusted Linux client configured through an SSH local-forward tunnel
 - [x] Gateway remains loopback-only and token-authenticated
 - [x] Persistent tunnel validated after client reboot
+- [x] Persistent tunnel validated after Wi-Fi interruption
+- [x] Persistent tunnel validated after Forge-host reboot
+- [x] Persistent tunnel validated after established SSH-session termination
 - [ ] SSH authentication and ingress fully hardened
 - [ ] Guest and IoT isolation verified
 - [ ] NetBird deployment audited
