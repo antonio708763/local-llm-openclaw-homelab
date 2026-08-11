@@ -1,307 +1,315 @@
 # Local LLM + OpenClaw Homelab
 
-A documented build for running a self-hosted coding assistant on a dual-boot workstation, with authenticated trusted-LAN access and future encrypted remote access.
+A documented self-hosted AI workstation built around an RTX 4090, local Ollama models, and OpenClaw. The project now has two parallel assistant profiles:
 
-## Target system
+- **Forge**: the stable, sandboxed coding/homelab assistant.
+- **Power**: the higher-capability profile using an abliterated Qwen model and a remote Alienware node for hands-on lab work.
 
-- **Agent:** Forge
-- **Model:** `qwen3-coder:30b`
-- **Model runtime:** Ollama `0.32.3`
-- **Agent layer:** OpenClaw `2026.7.1-2`
+The current priority is to make Power pleasant and reliable enough for day-to-day project work before adding more infrastructure.
+
+## Host system
+
 - **Host OS:** Ubuntu, dual-booted with Windows 10
 - **GPU:** NVIDIA RTX 4090, 24 GB VRAM
 - **CPU:** AMD Ryzen 9 7950X
 - **Memory:** 64 GB DDR5
+- **Model runtime:** Ollama `0.32.3`
+- **Agent layer:** OpenClaw `2026.7.1-2`
 - **Container runtime:** Docker Engine `29.6.2`
-- **Search service:** self-hosted SearXNG on `127.0.0.1:8888`
-- **Managed browser:** isolated Chromium container using `openclaw-sandbox-browser:bookworm-slim`
-- **Shared storage:** `Dual_Boot_Share`, NTFS, mounted at `/mnt/Dual_Boot_Share`
-- **Forge exchange folder:** `/mnt/Dual_Boot_Share/Forge_Shared`, exposed only to the command sandbox as `/forge-share`
-- **First trusted client:** Ubuntu Linux on an Alienware laptop
-- **Trusted-client transport:** persistent SSH local-forward tunnel
+- **Shared storage:** approximately 500 GB NTFS `Dual_Boot_Share` mounted at `/mnt/Dual_Boot_Share`
+- **Trusted Linux client / first Power node:** `Alienware-15-R3`
+
+## Forge and Power
+
+| Item | Forge | Power |
+|---|---|---|
+| Role | Stable sandboxed assistant | High-capability local/lab assistant |
+| Model | `qwen3-coder:30b` | `qwen3-abliterated:30b` |
+| Gateway | `127.0.0.1:18789` | `127.0.0.1:19789` |
+| Gateway auth | token | token |
+| Workspace | `~/.openclaw/workspace` | `~/.openclaw/workspace-power` |
+| Config | normal OpenClaw config | `~/.openclaw-power/openclaw.json` |
+| Execution | Docker sandbox | Alienware node / full mode under active validation |
+| Desktop launcher | `OpenClaw Forge` | `OpenClaw Power` |
 
 ## Current architecture
 
 ```text
-Trusted Alienware Linux client
-    |
-    | browser -> http://127.0.0.1:18789
-    |
-    | dedicated Ed25519 key
-    | encrypted SSH local forward to 192.168.110.187:22
-    v
-OpenSSH on Forge host
-    |
-    v
-OpenClaw Gateway 127.0.0.1:18789
-    |
-    +-- http://127.0.0.1:11434 --> Ollama --> qwen3-coder:30b --> RTX 4090
-    |
-    +-- web_search --> SearXNG on 127.0.0.1:8888 --> upstream search engines
-    |
-    `-- browser tool --> isolated Chromium browser container
+                             RTX 4090 Ubuntu workstation
 
-Local OpenClaw TUI
-    |
-    | ws://127.0.0.1:18789
-    v
-OpenClaw Gateway
-
-Forge command execution
-    |
-    v
-Docker command sandbox
-    +-- image: openclaw-sandbox:bookworm-slim
-    +-- user: sandbox, UID 1000
-    +-- Debian 12
-    +-- /workspace <-> ~/.openclaw/workspace (read/write)
-    +-- /forge-share <-> /mnt/Dual_Boot_Share/Forge_Shared (read/write)
-    +-- bridge networking for outbound DNS and HTTPS
-    `-- Ubuntu host home and the rest of Dual_Boot_Share are not mounted
-
-Forge browser automation
-    |
-    v
-Docker browser sandbox
-    +-- image: openclaw-sandbox-browser:bookworm-slim
-    +-- dedicated network: openclaw-sandbox-browser
-    +-- host-browser control: disabled
-    +-- personal browser profiles: not mounted
-    +-- /workspace mounted read/write
-    +-- no Forge_Shared or Dual_Boot_Share mount
-    `-- screenshots stored under ~/.openclaw/media on Ubuntu
+                         +-------------------------------+
+                         | Ollama 127.0.0.1:11434        |
+                         |                               |
+                         | qwen3-coder:30b               |
+                         | qwen3-abliterated:30b         |
+                         +---------------+---------------+
+                                         |
+                     only one large model is intended to
+                         remain loaded in VRAM at a time
+                                         |
+                    +--------------------+--------------------+
+                    |                                         |
+                    v                                         v
+        +-------------------------+              +-------------------------+
+        | Forge OpenClaw profile  |              | Power OpenClaw profile  |
+        | Gateway 127.0.0.1:18789 |              | Gateway 127.0.0.1:19789 |
+        | qwen3-coder:30b         |              | qwen3-abliterated:30b   |
+        +------------+------------+              +------------+------------+
+                     |                                          |
+           +---------+---------+                     +----------+----------+
+           |                   |                     |                     |
+           v                   v                     v                     v
+   Docker command      isolated browser       local browser UI      Alienware node
+      sandbox              sandbox              launcher            over SSH tunnel
+                                                                    127.0.0.1:19789
 ```
 
-The Gateway, Ollama, and SearXNG remain loopback-only. The Gateway has not been bound directly to the LAN and no reverse proxy or public port forwarding has been enabled. One trusted Linux client reaches the Gateway through an authenticated SSH local-forward tunnel. Forge can access only the dedicated `Forge_Shared` folder on `Dual_Boot_Share`; the rest of the partition remains unavailable to both sandboxes.
-
-## Completed
-
-### Storage and dual boot
-
-- [x] Kept Windows and Ubuntu on separate NVMe drives
-- [x] Backed up important Windows data
-- [x] Repaired and verified the Windows NTFS filesystem
-- [x] Resized the Windows partition safely
-- [x] Created an approximately 500 GB `Dual_Boot_Share` NTFS partition
-- [x] Mounted it permanently at `/mnt/Dual_Boot_Share`
-- [x] Confirmed the mount survives an Ubuntu reboot
-
-### Ollama and Qwen
-
-- [x] Installed and enabled Ollama `0.32.3`
-- [x] Downloaded and tested `qwen3-coder:30b`
-- [x] Confirmed `100% GPU` residency
-- [x] Validated approximately 21.7 GiB VRAM use
-- [x] Set OpenClaw and Ollama context to `32768`
-
-### OpenClaw
-
-- [x] Installed OpenClaw `2026.7.1-2`
-- [x] Connected it to `http://127.0.0.1:11434`
-- [x] Selected `ollama/qwen3-coder:30b`
-- [x] Installed the Gateway as an enabled systemd user service
-- [x] Kept the Gateway on `127.0.0.1:18789` with token authentication
-- [x] Confirmed Gateway and Ollama auto-start after reboot
-- [x] Created the Forge identity
-- [x] Disabled broken OpenAI-backed semantic memory search for now
-- [x] Disabled insecure Control UI authentication
-- [x] Applied the cautious execution policy
-- [x] Set normal command execution to `host=sandbox`
-- [x] Tuned compaction for the 32,768-token model
-- [x] Created and verified durable `MEMORY.md` and dated memory notes
-- [x] Confirmed durable memory is available in a fresh session
-- [x] Updated durable memory after the managed-browser and controlled-share milestones
-
-### Docker command sandbox
-
-- [x] Installed Docker Engine from Docker's official Ubuntu repository
-- [x] Validated Docker with `hello-world`
-- [x] Built `openclaw-sandbox:bookworm-slim`
-- [x] Enabled sandbox mode `all`, Docker backend, and agent scope
-- [x] Mounted the OpenClaw workspace read/write at `/workspace`
-- [x] Enabled Docker bridge networking
-- [x] Confirmed the first Forge tool request automatically created a sandbox runtime
-- [x] Confirmed commands run as the unprivileged `sandbox` user on Debian 12
-- [x] Confirmed `/home/antonio` is not visible inside the sandbox
-- [x] Confirmed writes in `/workspace` persist to `~/.openclaw/workspace`
-- [x] Confirmed outbound DNS resolution and HTTPS access
-
-### Self-hosted web search
-
-- [x] Installed the OpenClaw SearXNG plugin
-- [x] Deployed SearXNG as a Docker container
-- [x] Bound SearXNG only to `127.0.0.1:8888`
-- [x] Persisted SearXNG configuration at `~/searxng/settings.yml`
-- [x] Enabled HTML and JSON search output
-- [x] Added `web_search` and `web_fetch` to the sandbox tool allowlist
-- [x] Connected OpenClaw `web_search` to the local SearXNG service
-- [x] Completed a successful fresh-session web search test
-- [x] Pinned the plugin to `@openclaw/searxng-plugin@2026.7.1`
-
-### Isolated managed browser
-
-- [x] Built `openclaw-sandbox-browser:bookworm-slim` from the matching OpenClaw `v2026.7.1` source tag
-- [x] Enabled the sandbox browser and automatic startup
-- [x] Disabled host-browser control
-- [x] Placed the browser on the dedicated `openclaw-sandbox-browser` Docker network
-- [x] Added the `browser` tool to both required policy gates
-- [x] Opened and inspected `https://example.com`
-- [x] Verified the page title and main heading
-- [x] Generated a browser snapshot and screenshot
-- [x] Confirmed screenshots were saved under `~/.openclaw/media`
-- [x] Confirmed no personal Chrome, Chromium, Firefox, or credential directories were mounted
-- [x] Reran the deep OpenClaw security audit
-
-### Controlled shared-folder access
-
-- [x] Created `/mnt/Dual_Boot_Share/Forge_Shared`
-- [x] Mounted only that folder into the command sandbox as `/forge-share:rw`
-- [x] Explicitly kept browser binds empty
-- [x] Recreated the command and browser sandbox runtimes
-- [x] Confirmed Forge can read a host-created file
-- [x] Confirmed Forge can create a file that appears on the Ubuntu host
-- [x] Confirmed the rest of `/mnt/Dual_Boot_Share` is hidden inside the command sandbox
-- [x] Confirmed `/home/antonio` remains hidden inside the command sandbox
-- [x] Inspected the actual Docker mounts for both containers
-- [x] Confirmed the browser cannot see `/forge-share` or `/mnt/Dual_Boot_Share`
-- [x] Updated durable memory and created a controlled-share evidence bundle
-
-### First trusted Linux client
-
-- [x] Inventoried the Forge host interfaces, routes, Gateway bind, listening sockets, and firewall implementation
-- [x] Reserved the Forge host at `192.168.110.187`
-- [x] Disabled unused Samba services and closed ports 139 and 445
-- [x] Installed and validated OpenSSH Server
-- [x] Created a dedicated Ed25519 client key
-- [x] Confirmed key-only SSH login from the Alienware client
-- [x] Kept the OpenClaw Gateway bound to loopback
-- [x] Forwarded client `127.0.0.1:18789` to Forge-host `127.0.0.1:18789` through SSH
-- [x] Disabled the Alienware's conflicting older local OpenClaw Gateway
-- [x] Loaded the remote dashboard and authenticated with the Forge Gateway token
-- [x] Created `forge-gateway-tunnel.service` as a persistent systemd user service
-- [x] Enabled user lingering for pre-login operation
-- [x] Rebooted the client and confirmed the tunnel automatically returned
-- [x] Confirmed the dashboard, existing Forge chat, and durable memory remain accessible after reboot
-- [x] Confirmed the tunnel automatically recovers after the Alienware disconnects and reconnects to Wi-Fi
-- [x] Tuned SSH retry behavior with `ConnectTimeout 10` and `ConnectionAttempts 1`
-- [x] Tuned systemd recovery behavior with `Restart=on-failure` and `RestartSec=30`
-- [x] Preserved pre-tuning backups of the SSH profile and systemd user unit on the client
-- [x] Confirmed automatic tunnel recovery after a controlled Forge-host reboot
-- [x] Confirmed automatic tunnel recovery after terminating the established server-side SSH session
-- [x] Confirmed emergency access with the dedicated Alienware key before hardening
-- [x] Created a root-only OpenSSH configuration backup
-- [x] Disabled SSH password and keyboard-interactive authentication
-- [x] Confirmed the server offers only public-key authentication
-- [x] Reloaded SSH successfully without rebooting the Forge host
-- [x] Restarted and validated the persistent OpenClaw tunnel under the key-only policy
-
-## Validated results
+### Forge path
 
 ```text
-Model:                     qwen3-coder:30b
-Processor:                 100% GPU
-Context:                   32768 tokens
-GPU memory:                approximately 21.7 GiB / 24.6 GiB
-Gateway bind:              127.0.0.1:18789
-Gateway RPC probe:         ok
-Gateway authentication:    token
-Forge host LAN address:    192.168.110.187
-LAN access method:         SSH local forwarding
-Forge host SSH port:       22
-SSH authentication:        public key only
-PasswordAuthentication:    no
-KbdInteractiveAuth:        no
-PermitEmptyPasswords:      no
-PermitRootLogin:            without-password, inherited Ubuntu policy
-SSH hardening drop-in:      /etc/ssh/sshd_config.d/00-openclaw-key-only.conf
-Trusted client:            user-Alienware-15-R3
-Client forwarded bind:     127.0.0.1:18789
-Tunnel service:            forge-gateway-tunnel.service
-Tunnel after reboot:       enabled and active
-Tunnel after Wi-Fi loss:   recovered automatically
-Tunnel after host reboot:  recovered automatically
-Tunnel after dead session: recovered automatically
-Tunnel restart policy:     on-failure, 30-second delay
-SSH connection timeout:    10 seconds
-SSH connection attempts:   1 per service start
-Dashboard through tunnel:  HTTP/1.1 200 OK
-Exec host:                 sandbox
-Exec security:             allowlist
-Exec approval:             ask-on-miss
-Command sandbox image:     openclaw-sandbox:bookworm-slim
-Command sandbox user:      sandbox, UID 1000
-Command sandbox OS:        Debian GNU/Linux 12
-Workspace mount:           /workspace, read/write
-Forge shared mount:        /forge-share, read/write
-Forge shared host source:  /mnt/Dual_Boot_Share/Forge_Shared
-Whole share visible:       no
-Host home visible:         no
-DNS:                       working
-Outbound HTTPS:            working
-SearXNG bind:              127.0.0.1:8888
-SearXNG JSON API:           working
-SearXNG plugin pin:         @openclaw/searxng-plugin@2026.7.1
-OpenClaw web_search:        working through SearXNG
-Browser sandbox image:     openclaw-sandbox-browser:bookworm-slim
-Browser network:           openclaw-sandbox-browser
-Host-browser control:      disabled
-Personal browser mounts:   none
-Browser shared mount:      none
-Browser navigation:        working
-Browser snapshot:          working
-Browser screenshot:        working
-Compaction reserve:        8192 tokens
-Recent-token keep:         6000 tokens
-Durable memory:            verified and current
+OpenClaw Forge
+    -> 127.0.0.1:18789
+    -> Ollama qwen3-coder:30b
+    -> Docker command sandbox
+    -> isolated managed-browser container
 ```
 
-## Security-audit position
+Forge retains the original cautious design. Normal commands run in `openclaw-sandbox:bookworm-slim` as unprivileged user `sandbox`. The sandbox receives the OpenClaw workspace and only the dedicated `/mnt/Dual_Boot_Share/Forge_Shared` exchange folder.
 
-The most recent deep audit reports:
+### Power path
 
-- **1 critical:** OpenClaw classifies `qwen3-coder:30b` as a small model for untrusted web inputs while `web_search` and `web_fetch` are enabled.
-- **1 warning:** `trustedProxies` is empty while the Gateway is loopback-only.
+```text
+OpenClaw Power
+    -> 127.0.0.1:19789
+    -> Ollama qwen3-abliterated:30b
+    -> tools.exec host=node
+    -> Alienware-15-R3
+```
 
-The trusted-proxies warning requires no action until a reverse proxy is deliberately introduced. The small-model finding is accepted residual risk for the current single-user lab because command and browser activity are sandboxed, the Gateway is loopback-only, personal browser profiles are excluded, and external data access is limited to one deliberately selected folder.
+Power is intentionally separate from Forge. It has its own config, workspace, Gateway service, sessions, port, desktop launcher, SSH tunnel, and remote-node state.
 
-The managed browser must not be used for banking, personal email, password managers, or sensitive administrative accounts.
+## Models
 
-SSH password and keyboard-interactive authentication are now disabled. The remaining trusted-client risks are that the tunnel authenticates as the normal `antonio` administrator account, SSH is not yet restricted by UFW and OPNsense, Guest and IoT VLAN reachability has not yet been tested, and the inherited `PermitRootLogin without-password` policy still permits root key authentication.
+### Forge model
 
-## Planned inference-engine migration
+```text
+qwen3-coder:30b
+```
 
-The current deployment continues to use Ollama because its service management, model pulling, API, and OpenClaw integration keep the present build simple and reproducible.
+Validated at `32768` context and `100% GPU` residency on the RTX 4090.
 
-A future milestone is to transition the inference backend to a standalone `llama.cpp` server after side-by-side validation. This is not based on a finding that Ollama is inherently untrustworthy. The goal is to reduce abstraction and gain:
+### Power model
 
-- More direct visibility into the upstream inference runtime.
-- Finer control over build flags, context and KV-cache settings, batching, GPU offload, and server options.
-- Earlier access to upstream `llama.cpp` fixes and optimizations.
-- Easier low-level debugging and performance comparison.
-- A smaller and more directly auditable inference stack.
+Power uses the local Ollama alias:
 
-The migration must preserve loopback-only binding, OpenClaw compatibility, model quality, context length, GPU acceleration, automatic startup, recovery behavior, and a tested rollback path to Ollama. Ollama remains the active runtime until the standalone `llama.cpp` deployment passes those checks.
+```text
+qwen3-abliterated:30b
+```
+
+created from:
+
+```text
+hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M
+```
+
+Validated Power model details:
+
+```text
+Architecture:       qwen3moe
+Parameters:         30.5B
+Quantization:       Q4_K_M
+Downloaded size:    about 18 GB
+Context:            32768
+Max output tokens:  8192
+Ollama num_ctx:     32768
+Processor:          100% GPU
+Loaded size:        about 21 GB
+```
+
+A temporary `8192`-context test alias was used during GPU troubleshooting and then removed.
+
+To avoid VRAM contention, `qwen3-coder:30b` and `qwen3-abliterated:30b` are not intended to stay loaded simultaneously.
+
+## Forge milestones completed
+
+- [x] Built the Windows/Ubuntu dual-boot storage layout.
+- [x] Created and permanently mounted `Dual_Boot_Share`.
+- [x] Installed and validated NVIDIA/CUDA and Ollama.
+- [x] Installed OpenClaw `2026.7.1-2`.
+- [x] Installed the loopback-only Forge Gateway on port `18789`.
+- [x] Built and validated the Docker command sandbox.
+- [x] Deployed self-hosted SearXNG on `127.0.0.1:8888`.
+- [x] Built the isolated managed-browser image.
+- [x] Created `/mnt/Dual_Boot_Share/Forge_Shared` and exposed only that folder to the command sandbox.
+- [x] Created durable OpenClaw memory/checkpoint files.
+- [x] Built persistent SSH trusted-client access from the Alienware.
+- [x] Validated tunnel recovery after client reboot, Wi-Fi loss, Forge-host reboot, and established SSH-session termination.
+- [x] Disabled SSH password and keyboard-interactive authentication.
+- [x] Confirmed public-key-only SSH authentication.
+
+## Power milestones completed
+
+- [x] Downloaded the selected abliterated Qwen GGUF through Ollama.
+- [x] Created `qwen3-abliterated:30b`.
+- [x] Confirmed full RTX 4090 GPU residency.
+- [x] Selected `32768` as the current Power context target.
+- [x] Created the independent `power` OpenClaw profile.
+- [x] Created `~/.openclaw-power/openclaw.json`.
+- [x] Created `~/.openclaw/workspace-power`.
+- [x] Created and enabled `openclaw-gateway-power.service`.
+- [x] Kept the Power Gateway loopback-only on port `19789`.
+- [x] Set `ollama/qwen3-abliterated:30b` as the Power default model.
+- [x] Validated harmless direct write/modify/read/delete execution tests.
+- [x] Created `OpenClaw Forge` and `OpenClaw Power` graphical launchers.
+- [x] Created an Alienware SSH local-forward path for Power on port `19789`.
+- [x] Upgraded the Alienware to matching OpenClaw `2026.7.1-2`.
+- [x] Connected `Alienware-15-R3` as an OpenClaw Power node host.
+- [x] Diagnosed that `devices list` shows operator devices, not node hosts.
+- [x] Diagnosed and repaired a stale node pairing with empty capabilities/commands.
+- [x] Approved a fresh Alienware node capability request.
+- [x] Verified the node is paired, connected, approved, and advertising `browser`, `file`, `local-inference`, and `system` capabilities.
+- [x] Applied node-side exec defaults from a JSON file.
+- [x] Configured Power `tools.exec` to target `Alienware-15-R3` in full mode.
+
+## Alienware Power node
+
+The remote node uses an isolated state directory:
+
+```text
+~/.openclaw-power-node
+```
+
+A working foreground node connection requires the Power Gateway token in the node process environment:
+
+```bash
+OPENCLAW_GATEWAY_TOKEN="$POWER_TOKEN" \
+OPENCLAW_STATE_DIR="$HOME/.openclaw-power-node" \
+openclaw node run \
+  --host 127.0.0.1 \
+  --port 19789 \
+  --display-name "Alienware-15-R3"
+```
+
+Expected:
+
+```text
+node host gateway connected: ws://127.0.0.1:19789
+```
+
+Important troubleshooting facts:
+
+- `--no-tls` is not a valid option in OpenClaw `2026.7.1-2`; omit `--tls` for the SSH-forwarded plaintext loopback connection.
+- `AUTH_TOKEN_MISSING` means the node process was started without `OPENCLAW_GATEWAY_TOKEN`.
+- Brave choosing **Never save token** does not provide or remove the CLI node token.
+- `openclaw --profile power devices list` is not the remote-node inventory.
+- Use `nodes status`, `nodes pending`, `nodes approve`, and `nodes describe` for node hosts.
+- A node can be connected yet unusable if an old pairing is stale.
+
+The important stale-pairing signature was:
+
+```text
+paired: true
+connected: true
+approvalState: unapproved
+caps: []
+commands: []
+pendingRequestId: none
+```
+
+The reliable recovery was to remove the stale Alienware node entry, restart the node with the correct token, wait for a fresh `nodes pending` request, approve that exact request, and verify capabilities with `nodes describe`.
+
+See `docs/20-alienware-power-node.md` for the complete recovery sequence.
+
+## Current Power exec configuration
+
+Gateway-side Power exec target:
+
+```json
+{
+  "host": "node",
+  "mode": "full",
+  "node": "Alienware-15-R3"
+}
+```
+
+Alienware node-side approvals currently report:
+
+```text
+security=full
+ask=off
+askFallback=full
+```
+
+The node is now correctly paired and approved. The remaining problem is a later execution-policy layer: in the current browser test, `pwd` succeeded while `hostname` and `whoami` returned:
+
+```text
+SYSTEM_RUN_DENIED: approval required
+```
+
+That issue is still open. The working node pairing should not be torn down while debugging it.
+
+## Current usability issues
+
+These are the next priority before more infrastructure work:
+
+1. **Visible Qwen thinking/reasoning output**
+   - The Power UI can still display large reasoning blocks even when the model selector says `Off`.
+   - Provider configuration already reports `reasoning=false` and `thinking=false`.
+   - The next test is to disable thinking/reasoning at the OpenClaw session/default layer and verify a fresh chat.
+
+2. **Context is being consumed too quickly**
+   - Power is configured for `32768` tokens.
+   - Large reasoning blocks, tool schemas, system context, and conversation history can consume the window after only a few useful messages.
+   - The next step is to test `/status` and `/context list` in a clean Power session after reasoning is disabled, then tune compaction only if necessary.
+
+3. **Alienware command approval mismatch**
+   - Node pairing is healthy.
+   - Power is configured for node/full mode.
+   - Node defaults are full/off/full.
+   - Some ordinary commands are still requesting approval.
+   - This is the next remote-exec troubleshooting target after the thinking/context cleanup.
 
 ## Current checkpoint
 
-The trusted Alienware access path now uses public-key-only SSH authentication. Emergency access with the dedicated key was verified before hardening, a root-only OpenSSH backup was created, the key-only policy was loaded through `/etc/ssh/sshd_config.d/00-openclaw-key-only.conf`, and a no-key connection confirmed that the server offers only `publickey` authentication.
+As of August 10, 2026, this is no longer just a local model installation project. The working system has two distinct agent paths:
 
-The persistent tunnel was restarted under the new policy and returned with a new SSH PID, an active systemd user service, loopback listeners on port `18789`, and an `HTTP/1.1 200 OK` response from the remote OpenClaw dashboard. Recovery has now been validated after client reboot, Wi-Fi loss, Forge-host reboot, and established-session termination.
+```text
+Forge = stable, sandboxed, safer everyday assistant
+Power = abliterated Qwen, separate profile, higher-capability lab assistant
+```
 
-OpenClaw, Ollama, and SearXNG remain loopback-only. No public port forwarding or direct Gateway LAN bind has been introduced.
+Power can be opened graphically, its model runs fully on the RTX 4090, the Alienware reaches the Power Gateway through SSH, and the Alienware node is now correctly paired and capability-approved.
+
+The project should not expand sideways into more infrastructure until the existing Power workflow is comfortable to use for real work. The immediate objective is to eliminate reasoning spam, make normal conversations last, and finish reliable Alienware execution.
+
+## Planned inference-engine migration
+
+Ollama remains the active runtime because it keeps model management and OpenClaw integration simple.
+
+A future milestone is a side-by-side transition test to standalone `llama.cpp` for:
+
+- more direct runtime visibility;
+- finer control over context, KV cache, batching, and GPU offload;
+- easier low-level debugging and benchmarking;
+- earlier access to upstream optimizations;
+- a smaller inference stack.
+
+The migration must preserve OpenClaw compatibility, loopback-only exposure, model quality, context length, GPU acceleration, automatic startup, recovery behavior, and a tested rollback path to Ollama.
+
+Qwen3.6-27B is also planned as a future model evaluation.
 
 ## Next tasks
 
-1. Evaluate and build a dedicated restricted account for tunnel-only access.
-2. Restrict SSH ingress with UFW and OPNsense.
-3. Confirm Guest and IoT VLANs cannot reach TCP port 22 on the Forge host.
-4. Decide whether to change the inherited root policy from `PermitRootLogin without-password` to `PermitRootLogin no`.
-5. Review and deliberately select SearXNG upstream engines.
-6. Audit NetBird for encrypted remote access without public port forwarding.
-7. Begin controlled management of a lab computer.
-8. Design a separate high-trust OpenClaw instance for `ollama/hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M`, with explicit approval before high-impact actions and remote control limited to a deliberately selected lab computer.
-9. Add and evaluate Qwen3.6-27B as a future model option.
-10. Benchmark Ollama against a standalone `llama.cpp` server, then transition the inference backend after compatibility, performance, security, startup, recovery, and rollback validation succeeds.
+1. Disable visible thinking/reasoning in Power and verify the change in a fresh session.
+2. Inspect Power `/status` and `/context list`, then confirm several normal messages do not immediately exhaust the context window.
+3. Resolve the Alienware `SYSTEM_RUN_DENIED: approval required` mismatch without resetting the now-working node pairing.
+4. Convert the working Alienware node process into a reliable persistent service after command execution is proven.
+5. Validate practical file and system-management workflows from the Power browser UI.
+6. Start using Power for normal project work before adding additional infrastructure.
+7. Later, define confirmation behavior for genuinely high-impact actions and add stronger audit/rollback controls.
+8. Resume deferred Forge/SSH network hardening when it becomes useful.
+9. Evaluate Qwen3.6-27B.
+10. Benchmark Ollama against standalone `llama.cpp`.
 
 ## Repository map
 
@@ -328,7 +336,9 @@ OpenClaw, Ollama, and SearXNG remain loopback-only. No public port forwarding or
 │   ├── 15-managed-browser-and-security-audit.md
 │   ├── 16-controlled-shared-folder-access.md
 │   ├── 17-trusted-linux-client-ssh-tunnel.md
-│   └── 18-ssh-key-only-hardening.md
+│   ├── 18-ssh-key-only-hardening.md
+│   ├── 19-openclaw-power-profile.md
+│   └── 20-alienware-power-node.md
 ├── docker/
 │   └── openclaw-sandbox/
 │       └── Dockerfile
@@ -336,20 +346,12 @@ OpenClaw, Ollama, and SearXNG remain loopback-only. No public port forwarding or
 └── assets/screenshots/
 ```
 
-## Safety rules
+## Repository rules
 
-1. Keep Ollama, SearXNG, and the Gateway loopback-only while SSH forwarding meets the access requirement.
-2. Require both SSH authentication and OpenClaw token authentication for trusted-client access.
-3. Do not publish OpenClaw, Ollama, SearXNG, or SSH through a public router port-forward.
-4. Keep command execution approval-controlled.
-5. Run generated commands inside a sandbox whenever practical.
-6. Mount only the smallest deliberately selected external folder; never mount an entire production or archive drive by default.
-7. Keep secrets, tokens, private keys, and sensitive personal files out of `Forge_Shared`.
-8. Keep the managed browser separate from personal browser profiles, credentials, and external data binds.
-9. Do not use the managed browser for banking, personal email, password managers, or sensitive administration.
-10. Treat webpage content and search results as untrusted input.
-11. Keep SSH private keys off Git and revoke a trusted client by removing its exact authorized-key entry.
-12. Test infrastructure changes against lab systems first.
-13. Do not commit tokens, API keys, SearXNG secret keys, or `openclaw.json` secrets.
-14. Keep documentation and change history in Git.
-15. Keep any future unsandboxed or high-trust agent separate from Forge, scoped to a dedicated lab computer, and approval-gated for high-impact actions.
+1. Never commit Gateway tokens, API keys, private SSH keys, SearXNG secret keys, or raw `openclaw.json` secrets.
+2. Keep Forge and Power configuration/state separate.
+3. Keep both Gateways loopback-only while SSH forwarding satisfies the access requirement.
+4. Do not run both 30B-class models in VRAM unnecessarily.
+5. Test remote-control changes on the Alienware lab node before expanding to additional devices.
+6. Preserve the stable Forge path while Power is being tuned.
+7. Keep documentation and troubleshooting history in Git so known failure modes are not rediscovered from scratch.
