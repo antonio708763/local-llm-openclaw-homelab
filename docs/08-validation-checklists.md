@@ -1,307 +1,237 @@
 # Validation Checklists
 
-## Windows post-resize
+## Host and storage
 
-- [x] Windows boots normally
-- [x] `chkdsk C: /scan` reports no problems
-- [x] Important files and applications remain accessible
-- [x] Archive drives are visible
-- [x] `Dual_Boot_Share` appears as `H:`
-- [x] Files can be created and read on `H:`
-
-## Ubuntu storage
-
-- [x] Ubuntu boots normally
-- [x] `Dual_Boot_Share` appears in Files
-- [x] UUID recorded as `48003BD2003BC62A`
-- [x] Mounted at `/mnt/Dual_Boot_Share`
-- [x] NTFS read/write access confirmed
-- [x] Automatic mount confirmed after reboot
+- [x] Windows and Ubuntu remain on separate NVMe drives
+- [x] Windows filesystem verified after resize
+- [x] Approximately 500 GB `Dual_Boot_Share` created
+- [x] `Dual_Boot_Share` mounted at `/mnt/Dual_Boot_Share`
+- [x] NTFS read/write confirmed from Ubuntu
+- [x] Automatic mount confirmed after Ubuntu reboot
+- [x] RTX 4090 detected by `nvidia-smi`
+- [x] NVIDIA driver and CUDA access validated
+- [x] 64 GB system RAM available
 - [ ] Confirm cross-OS file compatibility with files created from both operating systems
 
-## Ollama and model
+## Ollama
 
-- [x] NVIDIA driver working
-- [x] CUDA access verified
-- [x] RTX 4090 visible
-- [x] Ollama installed, active, and enabled
-- [x] `qwen3-coder:30b` downloaded
-- [x] Coding response generated successfully
-- [x] Model reported as `100% GPU`
-- [x] OpenClaw `contextWindow` set to `32768`
-- [x] Ollama `num_ctx` set to `32768`
+- [x] Ollama `0.32.3` installed
+- [x] Ollama service enabled and active
+- [x] Ollama bound locally
+- [x] `qwen3-coder:30b` retained for Forge
+- [x] `qwen3-abliterated:30b` retained for Power
+- [x] Both large models individually validated on the RTX 4090
+- [x] Power model validated at `32768` context
+- [x] Forge model validated at `32768` context
+- [x] Temporary 8192-context Power GPU-test alias removed
+- [x] Workflow documented so only one 30B-class model needs to remain loaded at a time
 
-## OpenClaw local validation
+## Forge OpenClaw profile
 
 - [x] OpenClaw `2026.7.1-2` installed
 - [x] Node.js `24.18.0` installed
-- [x] OpenClaw resolves from `/home/antonio/.npm-global/bin/openclaw`
-- [x] Workspace created at `~/.openclaw/workspace`
-- [x] Ollama provider configured as local-only
-- [x] Ollama URL set to `http://127.0.0.1:11434`
-- [x] Default model set to `ollama/qwen3-coder:30b`
+- [x] Default Forge model is `ollama/qwen3-coder:30b`
+- [x] Forge Gateway bound to `127.0.0.1:18789`
 - [x] Gateway token authentication enabled
-- [x] Gateway bound to `127.0.0.1:18789`
-- [x] Gateway systemd user service enabled
-- [x] Gateway runtime active and RPC probe `ok`
-- [x] Ollama and Gateway auto-start confirmed after reboot
-- [x] Forge identity completed
-- [x] Semantic memory search disabled until a local provider is configured
-- [x] Insecure Control UI authentication disabled
-- [x] Cautious execution policy applied
-- [x] Effective execution policy reports `security=allowlist` and `ask=on-miss`
-- [x] Normal exec host set to `sandbox`
-- [x] Compaction reserve set to `8192`
-- [x] Compaction reserve floor set to `8192`
-- [x] Recent-token retention set to `6000`
-- [x] Configuration validates after compaction tuning
-- [x] Detailed context breakdown inspected
-- [x] `MEMORY.md` created and verified from Ubuntu
-- [x] Dated memory note created and verified from Ubuntu
-- [x] Current project checkpoint added to durable memory
-- [x] Fresh session recalled durable goals, environment, and safety rules
-- [x] Durable memory updated with the managed-browser milestone
-- [x] `memory/2026-07-28.md` created and verified
-- [x] Durable memory updated with the controlled-share milestone
+- [x] Forge Gateway systemd user service enabled
+- [x] Forge and Ollama auto-start validated after reboot
+- [x] Forge identity/bootstrap completed
+- [x] Normal Forge exec host is the Docker sandbox
+- [x] Compaction configured for the 32768-token Forge context
+- [x] Durable `MEMORY.md` and dated memory notes created and verified
+- [x] Fresh Forge session recalled durable project information
 
-## Docker validation
+## Docker command sandbox
 
-- [x] Docker installed from the official Docker repository
-- [x] Docker Engine version `29.6.2`
-- [x] Docker Compose version `v5.3.1`
-- [x] Docker service enabled and active
+- [x] Docker Engine `29.6.2` installed from the official Docker repository
+- [x] Docker Compose installed
 - [x] `hello-world` completed successfully
-- [x] Administrator added to Docker group
-- [x] `docker ps` works without `sudo` after reboot
+- [x] `openclaw-sandbox:bookworm-slim` built
+- [x] Commands run as unprivileged user `sandbox`
+- [x] Container OS reports Debian 12
+- [x] `/home/antonio` is not visible inside the sandbox
+- [x] `/workspace` persists to the OpenClaw workspace
+- [x] Outbound DNS works
+- [x] Outbound HTTPS works
 
-## OpenClaw command-sandbox validation
+## Self-hosted search and managed browser
 
-- [x] Image `openclaw-sandbox:bookworm-slim` built
-- [x] Image includes Bash, curl, Git, jq, Python 3, ripgrep, and CA certificates
-- [x] Container uses unprivileged `sandbox` user
-- [x] Sandbox mode set to `all`
-- [x] Backend set to `docker`
-- [x] Scope set to `agent`
-- [x] Workspace access set to `rw`
-- [x] Docker network set to `bridge`
-- [x] `sandbox explain` reports `runtime: sandboxed`
-- [x] Host workspace maps to `/workspace`
-- [x] First harmless tool request completed
-- [x] Sandbox container appeared automatically
-- [x] `openclaw sandbox list` reports one running runtime
-- [x] Runtime image is `openclaw-sandbox:bookworm-slim`
-- [x] Commands run as UID/GID `1000` user `sandbox`
-- [x] Container reports Debian GNU/Linux 12
-- [x] Working directory is `/workspace`
-- [x] `/home/antonio` is not visible
-- [x] Workspace file creation succeeded
-- [x] Host saw the created file at `~/.openclaw/workspace/sandbox-test.txt`
-- [x] Outbound DNS resolution succeeded
-- [x] Outbound HTTPS returned HTTP 200
+- [x] SearXNG deployed on `127.0.0.1:8888`
+- [x] Persistent SearXNG configuration created
+- [x] JSON search output enabled
+- [x] OpenClaw SearXNG plugin installed and pinned to `@openclaw/searxng-plugin@2026.7.1`
+- [x] `web_search` and `web_fetch` validated in a fresh Forge session
+- [x] `openclaw-sandbox-browser:bookworm-slim` built
+- [x] Browser sandbox uses a dedicated Docker network
+- [x] Host-browser control disabled
+- [x] Browser navigation, snapshot, and screenshot validated
+- [x] Personal browser profiles not mounted
+- [x] Browser does not receive the shared-folder bind
+- [ ] Review and deliberately select SearXNG upstream engines
 
-## Controlled shared-folder validation
+## Controlled shared-folder access
 
 - [x] Created `/mnt/Dual_Boot_Share/Forge_Shared`
-- [x] Confirmed the parent NTFS partition is mounted read/write with `ntfs3`
-- [x] Created and read `host-created.txt` from Ubuntu
-- [x] Enabled `dangerouslyAllowExternalBindSources` deliberately
-- [x] Command bind set exactly to `/mnt/Dual_Boot_Share/Forge_Shared:/forge-share:rw`
-- [x] Browser bind list explicitly set to `[]`
-- [x] Configuration validated after bind changes
-- [x] Existing command sandbox removed and recreated on next use
-- [x] Existing browser sandbox removed and recreated on next use
-- [x] Forge read `/forge-share/host-created.txt`
-- [x] Forge created `/forge-share/forge-created.txt`
-- [x] Ubuntu confirmed `forge-created.txt` on the NTFS partition
-- [x] Forge reported `PASS_ENTIRE_SHARE_HIDDEN`
-- [x] Forge reported `PASS_HOST_HOME_HIDDEN`
-- [x] Command-container mounts inspected directly
-- [x] Command container has `/forge-share` read/write
-- [x] Command container does not mount the entire `Dual_Boot_Share`
-- [x] Browser-container mounts inspected directly
-- [x] Browser container has no `/forge-share` mount
-- [x] Browser container has no `Dual_Boot_Share` mount
-- [x] Direct browser-container test reported `PASS: browser cannot see Forge_Shared`
-- [x] Direct browser-container test reported `PASS: browser cannot see Dual_Boot_Share`
-- [x] Managed browser still opened `https://example.com` successfully
-- [x] Rollback commands documented
+- [x] Mounted only `Forge_Shared` into the Forge command sandbox as `/forge-share:rw`
+- [x] Browser bind list explicitly set to empty
+- [x] Forge can read a host-created file from `/forge-share`
+- [x] Forge can create a host-visible file in `/forge-share`
+- [x] Rest of `Dual_Boot_Share` hidden from command sandbox
+- [x] Host home hidden from command sandbox
+- [x] Browser cannot see `/forge-share`
+- [x] Browser cannot see `/mnt/Dual_Boot_Share`
+- [x] Command and browser container mounts inspected directly
 
-## Self-hosted search validation
-
-- [x] OpenClaw SearXNG plugin installed
-- [x] SearXNG container created with `--restart unless-stopped`
-- [x] SearXNG published only on `127.0.0.1:8888`
-- [x] HTML interface reachable locally
-- [x] Persistent configuration mounted read-only from `~/searxng/settings.yml`
-- [x] JSON output enabled
-- [x] JSON search request returned results
-- [x] OpenClaw search provider set to `searxng`
-- [x] Plugin base URL set to `http://127.0.0.1:8888`
-- [x] `web_search` and `web_fetch` added to sandbox tool policy
-- [x] Fresh OpenClaw session exposed the `web_search` tool
-- [x] Forge identified SearXNG as the provider
-- [x] SearXNG container healthy at the stopping point
-- [x] Plugin pinned to `@openclaw/searxng-plugin@2026.7.1`
-- [x] Runtime inspection reports the exact pinned install specification
-
-## Managed-browser validation
-
-- [x] Browser plugin enabled
-- [x] Browser control endpoint reachable
-- [x] Matching OpenClaw source tag identified as `v2026.7.1`
-- [x] Image `openclaw-sandbox-browser:bookworm-slim` built successfully
-- [x] Browser sandbox enabled
-- [x] Browser auto-start enabled
-- [x] Browser image configured explicitly
-- [x] Dedicated network configured as `openclaw-sandbox-browser`
-- [x] Host-browser control disabled
-- [x] noVNC enabled
-- [x] `browser` added to global tool policy
-- [x] `browser` added to sandbox tool policy
-- [x] Configuration validated after browser changes
-- [x] Gateway restarted after browser changes
-- [x] Fresh session received the browser tool
-- [x] Browser container created automatically
-- [x] Browser container reports running status
-- [x] Browser container uses `openclaw-sandbox-browser:bookworm-slim`
-- [x] Browser container uses the dedicated network
-- [x] `https://example.com` opened successfully
-- [x] Final URL confirmed
-- [x] Page title confirmed as `Example Domain`
-- [x] Main heading confirmed as `Example Domain`
-- [x] Browser snapshot completed
-- [x] Browser screenshot completed
-- [x] Screenshot files located under `~/.openclaw/media`
-- [x] Browser mounts inspected
-- [x] Personal Chrome profile not mounted
-- [x] Personal Chromium profile not mounted
-- [x] Personal Firefox profile not mounted
-- [x] No credential or password-manager directory observed
-- [x] `Dual_Boot_Share` not mounted into the browser container
-
-## Security-audit validation
-
-- [x] Deep audit rerun after browser configuration
-- [x] Unpinned SearXNG warning resolved
-- [x] Small-model-with-web-tools finding documented
-- [x] Small-model finding accepted as residual risk for the current single-user sandboxed lab
-- [x] Trusted-proxies warning reviewed
-- [x] No trusted-proxy change made while the Gateway remains loopback-only
-- [x] Browser use restricted away from banking, personal email, password managers, and sensitive administration
-- [x] Web content designated as untrusted input
-
-## Trusted Linux client SSH-tunnel validation
+## Trusted Alienware SSH access
 
 ### Forge host
 
 - [x] Trusted-LAN address reserved as `192.168.110.187`
-- [x] Network, routes, Gateway bind, listening sockets, and firewall implementation inventoried
-- [x] Unused `smbd` and `nmbd` services disabled
-- [x] Samba ports 139 and 445 no longer listening
-- [x] OpenSSH Server installed
-- [x] `sshd -t` reports a valid configuration
-- [x] SSH service enabled and active
-- [x] TCP port 22 listening
-- [x] OpenClaw Gateway remains bound to `127.0.0.1:18789`
-- [x] Ollama remains bound to loopback
-- [x] SearXNG remains bound to loopback
-- [x] SSH, Ollama, and the OpenClaw Gateway return automatically after a Forge-host reboot
+- [x] OpenSSH Server installed and validated
+- [x] Unused Samba services disabled
+- [x] Ports 139 and 445 no longer listening
+- [x] Forge Gateway remains loopback-only
+- [x] Ollama remains loopback-only
+- [x] SearXNG remains loopback-only
+- [x] SSH, Ollama, and Forge Gateway return after a Forge-host reboot
 
-### Trusted client
+### Alienware client
 
-- [x] Ubuntu Linux client identified as `user-Alienware-15-R3`
+- [x] Ubuntu client identified as `user-Alienware-15-R3`
 - [x] Dedicated `~/.ssh/openclaw_forge` Ed25519 key created
-- [x] Public key installed on the Forge host
+- [x] Public key installed on the RTX host
 - [x] Key-only SSH login succeeded
-- [x] `forge-gateway` SSH profile created
-- [x] `LocalForward 18789 127.0.0.1:18789` validated
-- [x] `ExitOnForwardFailure yes` enabled
-- [x] SSH keepalive settings configured
-- [x] `ConnectTimeout 10` configured
-- [x] `ConnectionAttempts 1` configured
-- [x] Conflicting older local OpenClaw Gateway stopped and disabled
-- [x] Client-side port `18789` became available
-- [x] Manual tunnel listener owned by `ssh`
-- [x] Dashboard through the tunnel returned `HTTP/1.1 200 OK`
+- [x] Forge local forward `127.0.0.1:18789 -> RTX 127.0.0.1:18789` validated
+- [x] Conflicting older local OpenClaw Gateway disabled
+- [x] Remote Forge dashboard returned HTTP 200
 - [x] Gateway token login succeeded through the tunnel
-- [x] Existing Forge chat and durable memory opened successfully
+- [x] Existing Forge chat and durable memory opened remotely
 
-### Persistent tunnel
+### Persistent Forge tunnel
 
-- [x] `forge-gateway-tunnel.service` created as a systemd user service
-- [x] Unit enabled and started
-- [x] Unit uses `BatchMode=yes`
-- [x] Unit uses `Restart=on-failure`
-- [x] Unit uses a 30-second restart delay
-- [x] Unit restarts automatically after failure
+- [x] `forge-gateway-tunnel.service` created
+- [x] Service enabled and active
+- [x] `Restart=on-failure` configured
+- [x] 30-second restart delay configured
 - [x] User lingering enabled
-- [x] `Linger=yes` verified
-- [x] Client rebooted
-- [x] Tunnel service returned as enabled and active after reboot
-- [x] Loopback listener returned after reboot
-- [x] Dashboard returned HTTP 200 after reboot
-- [x] Wi-Fi interruption recovery tested
-- [x] Tunnel recovered automatically after Wi-Fi returned
-- [x] Forge-host restart recovery tested
-- [x] Tunnel recovered automatically after the Forge host returned
-- [x] Established server-side SSH tunnel process terminated deliberately
-- [x] Client systemd service replaced the failed SSH process
-- [x] Tunnel PID changed from `10466` to `13456`
-- [x] `NRestarts` increased from `16` to `17`
-- [x] Loopback listener returned after tunnel-process replacement
-- [x] Dashboard returned HTTP 200 after tunnel-process replacement
-- [x] Documented that restarting the SSH listener may not terminate an existing SSH session
+- [x] Tunnel returned after client reboot
+- [x] Tunnel recovered after Wi-Fi interruption
+- [x] Tunnel recovered after Forge-host reboot
+- [x] Tunnel recovered after established server-side SSH session termination
 
-### Remaining SSH hardening
+### SSH authentication hardening
 
-- [ ] Disable SSH password authentication after recovery access is confirmed
+- [x] Emergency dedicated-key access confirmed before hardening
+- [x] Root-only OpenSSH configuration backup created
+- [x] Password authentication disabled
+- [x] Keyboard-interactive authentication disabled
+- [x] Server confirmed to offer public-key authentication only
+- [x] Hardened SSH configuration reloaded without rebooting the RTX host
+- [x] Persistent Forge tunnel validated under the key-only policy
 - [ ] Evaluate a dedicated restricted tunnel account
 - [ ] Restrict SSH ingress with UFW
 - [ ] Restrict SSH ingress with OPNsense policy
 - [ ] Confirm Guest VLAN cannot reach TCP port 22
 - [ ] Confirm IoT VLAN cannot reach TCP port 22
+- [ ] Decide whether inherited root key login should be disabled completely
 
-## Local evidence bundles
+## Power OpenClaw profile
 
-### Managed browser
+- [x] Selected Power model source `hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M`
+- [x] Created Ollama alias `qwen3-abliterated:30b`
+- [x] Model reports `qwen3moe`, 30.5B parameters, Q4_K_M
+- [x] Model downloaded size approximately 18 GB
+- [x] Model validated at 100% GPU residency
+- [x] Power context configured at `32768`
+- [x] Power `maxTokens` configured at `8192`
+- [x] Ollama `num_ctx` configured at `32768`
+- [x] Separate OpenClaw `power` profile created
+- [x] Power config stored at `~/.openclaw-power/openclaw.json`
+- [x] Power workspace stored at `~/.openclaw/workspace-power`
+- [x] Power Gateway bound to `127.0.0.1:19789`
+- [x] Power Gateway token authentication enabled
+- [x] `openclaw-gateway-power.service` enabled and active
+- [x] Power dashboard returns HTTP 200 locally
+- [x] Default model reports `ollama/qwen3-abliterated:30b`
+- [x] Harmless full-host create/modify/read/delete exec test completed
+- [x] `OpenClaw Forge` graphical launcher created
+- [x] `OpenClaw Power` graphical launcher created
+- [x] Power can be opened from the Ubuntu desktop without terminal configuration
 
-- [x] `browser-config.json` created
-- [x] `browser-image.txt` created
-- [x] `browser-runtime.txt` created
-- [x] `sandbox-tool-policy.json` created
-- [x] `searxng-plugin.json` created
-- [x] `security-audit.txt` created
+## Power model behavior
 
-### Controlled share
+- [x] Provider entry currently reports `reasoning=false`
+- [x] Provider params currently report `thinking=false`
+- [x] Power model context remains `32768`
+- [ ] Verify a fresh Power session no longer prints large reasoning blocks
+- [ ] Verify OpenClaw session/default thinking and reasoning controls persist across new sessions
+- [ ] Inspect `/status` after a clean start
+- [ ] Inspect `/context list` after a clean start
+- [ ] Confirm several ordinary messages do not immediately consume most of the context window
+- [ ] Retune Power compaction only if the clean-session test still requires it
+- [ ] Increase model context only if 32768 remains insufficient after reasoning output is fixed
 
-- [x] `browser-binds.json` created
-- [x] `browser-container-mounts.txt` created
-- [x] `command-binds.json` created
-- [x] `command-container-mounts.txt` created
-- [x] `host-verification.txt` created
-- [x] `partition-mount.txt` created
+## Alienware Power tunnel
 
-### Evidence review
+- [x] Power uses separate client loopback port `19789`
+- [x] `power-gateway-tunnel.service` created on Alienware
+- [x] Power tunnel returns HTTP 200 from the RTX Power Gateway
+- [x] Forge tunnel on `18789` and Power tunnel on `19789` coexist
+- [x] Gateway token can be retrieved through authenticated SSH when needed
+- [x] No direct Power Gateway LAN bind introduced
 
-- [ ] Review every file for secrets before any public commit
-- [ ] Commit only safe selected evidence artifacts
+## Alienware Power node host
 
-## Network readiness
+- [x] Alienware OpenClaw upgraded to `2026.7.1-2`
+- [x] `openclaw node` command family confirmed available
+- [x] Isolated node state directory created at `~/.openclaw-power-node`
+- [x] Node display name selected as `Alienware-15-R3`
+- [x] Confirmed `--no-tls` is unsupported and unnecessary for the SSH-forwarded loopback connection
+- [x] Diagnosed missing Gateway token error `AUTH_TOKEN_MISSING`
+- [x] Node successfully connected using `OPENCLAW_GATEWAY_TOKEN`
+- [x] Confirmed `devices list` operator entries are not remote node hosts
+- [x] Node inspected with `nodes status --json`
+- [x] Stale pairing diagnosed from `paired=true`, `connected=true`, `unapproved`, empty capabilities, and empty commands
+- [x] Stale node pairing removed
+- [x] Node reconnected and generated a fresh pending request
+- [x] Fresh pending request approved
+- [x] `nodes describe` reports `paired · connected`
+- [x] `nodes describe` reports approval `approved`
+- [x] Capabilities include `browser`, `file`, `local-inference`, and `system`
+- [x] Commands include `system.run`, `system.run.prepare`, and `system.which`
+- [x] Node approvals snapshot retrieved successfully
+- [x] Node approvals updated successfully using `--file`
+- [x] Node defaults report `security=full`, `ask=off`, `askFallback=full`
 
-- [x] Self-hosted SearXNG configured
-- [x] Managed browser configured with deliberate permissions
-- [x] Deep security audit rerun after browser setup
-- [x] Controlled shared-folder access configured and validated
-- [x] Current network and firewall implementation inventoried
-- [x] Stable Forge-host LAN address reserved
-- [x] First trusted Linux client configured through an SSH local-forward tunnel
-- [x] Gateway remains loopback-only and token-authenticated
-- [x] Persistent tunnel validated after client reboot
-- [x] Persistent tunnel validated after Wi-Fi interruption
-- [x] Persistent tunnel validated after Forge-host reboot
-- [x] Persistent tunnel validated after established SSH-session termination
-- [ ] SSH authentication and ingress fully hardened
-- [ ] Guest and IoT isolation verified
-- [ ] NetBird deployment audited
-- [ ] Remote access tested
-- [ ] OpenClaw access boundaries implemented for remote peers
+## Power remote exec targeting
+
+- [x] Removed legacy `tools.exec.security` field before using `tools.exec.mode`
+- [x] Removed legacy `tools.exec.ask` field before using `tools.exec.mode`
+- [x] Set `tools.exec.host=node`
+- [x] Set `tools.exec.mode=full`
+- [x] Set `tools.exec.node=Alienware-15-R3`
+- [x] Power configuration validates with the current exec schema
+- [x] `pwd` executed successfully on the Alienware from the Power browser path
+- [ ] Resolve `SYSTEM_RUN_DENIED: approval required` for `hostname`
+- [ ] Resolve `SYSTEM_RUN_DENIED: approval required` for `whoami`
+- [ ] Confirm a normal set of harmless system commands executes consistently
+- [ ] Confirm harmless file create/read/modify/delete through the Power node
+- [ ] Convert the working node process into a persistent service after foreground execution is reliable
+
+## Power stopping point
+
+Current priority order:
+
+- [ ] 1. Disable visible thinking/reasoning output
+- [ ] 2. Verify healthy conversation/context behavior
+- [ ] 3. Resolve remaining remote-command approval mismatch
+- [ ] 4. Make the Alienware node persistent
+- [ ] 5. Begin using Power for normal project work
+- [ ] 6. Add stronger confirmation/audit/rollback controls after the workflow is functionally useful
+
+See also:
+
+```text
+docs/19-openclaw-power-profile.md
+docs/20-alienware-power-node.md
+```
