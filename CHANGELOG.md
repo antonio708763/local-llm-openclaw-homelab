@@ -1,5 +1,53 @@
 # Changelog
 
+## 2026-08-10
+
+### Added
+
+- Added `docs/19-openclaw-power-profile.md` documenting the separate Power profile, abliterated Qwen model, Gateway, launchers, execution target, and current usability issues.
+- Added `docs/20-alienware-power-node.md` documenting the Alienware Power node, SSH-forwarded port `19789`, token-authenticated node startup, stale-pairing recovery, capability approval, and node-side exec policy.
+- Added a second browser launcher on the RTX Ubuntu workstation for `OpenClaw Power` while keeping `OpenClaw Forge` available as the normal sandboxed assistant.
+- Added a second SSH local-forward path on the Alienware for the Power Gateway on port `19789`.
+
+### Completed
+
+- Pulled `hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M` through Ollama and created the local alias `qwen3-abliterated:30b`.
+- Confirmed the Q4_K_M model is approximately 18 GB on disk and runs fully on the RTX 4090.
+- Confirmed the normal Power model runs at `32768` context and occupies roughly 21 GB while loaded.
+- Removed the temporary low-context GPU test alias after confirming GPU residency.
+- Confirmed only one 30B-class model should be loaded at a time to avoid VRAM competition between `qwen3-coder:30b` and `qwen3-abliterated:30b`.
+- Created the separate OpenClaw `power` profile with config at `~/.openclaw-power/openclaw.json` and workspace at `~/.openclaw/workspace-power`.
+- Created and enabled `openclaw-gateway-power.service` on loopback port `19789` with token authentication.
+- Set `ollama/qwen3-abliterated:30b` as the Power default model.
+- Set Power model context and Ollama `num_ctx` to `32768` with `maxTokens` at `8192`.
+- Validated harmless full-host Power exec by creating, modifying, reading, listing, and removing a temporary test directory.
+- Created graphical `OpenClaw Forge` and `OpenClaw Power` launchers so normal use can start from the desktop rather than the terminal.
+- Upgraded the Alienware OpenClaw client to `2026.7.1-2` to match the RTX host.
+- Created the Power SSH tunnel on client loopback port `19789` and confirmed `HTTP/1.1 200 OK` from the Power dashboard.
+- Determined that Brave's "Never save token" choice affects browser credential storage only and does not provide the CLI node process with the Gateway token.
+- Identified that `openclaw --profile power devices list` shows operator/control devices, not OpenClaw node hosts.
+- Established the correct node workflow using `nodes status`, `nodes pending`, `nodes approve`, and `nodes describe`.
+- Confirmed `--no-tls` is not a valid `openclaw node run` option in `2026.7.1-2`; plaintext SSH-forwarded use simply omits `--tls`.
+- Diagnosed `AUTH_TOKEN_MISSING` and successfully connected the Alienware node by launching it with `OPENCLAW_GATEWAY_TOKEN` in the environment.
+- Diagnosed a stale node pairing that showed `paired=true`, `connected=true`, but `approvalState=unapproved`, empty capabilities, empty commands, and no usable pending request.
+- Removed the stale pairing, reconnected the node, obtained a fresh pending capability request, approved it, and verified the node as `paired · connected` and `approved`.
+- Verified Alienware node capabilities `browser`, `file`, `local-inference`, and `system`.
+- Verified advertised commands including `browser.proxy`, `ollama.chat`, `ollama.models`, `system.execApprovals.get`, `system.execApprovals.set`, `system.run`, `system.run.prepare`, and `system.which`.
+- Applied node-side exec defaults from a JSON file after an earlier `--stdin` JSON5 attempt failed.
+- Set node-side defaults to `security=full`, `ask=off`, and `askFallback=full`.
+- Set Power `tools.exec` to `host=node`, `mode=full`, and `node=Alienware-15-R3` after removing incompatible legacy `security` and `ask` fields.
+
+### Current issues
+
+- The Power web UI still shows large Qwen reasoning blocks in some tool runs even though the model selector displays thinking as `Off` and provider settings report `reasoning=false` and `thinking=false`.
+- Those reasoning blocks and OpenClaw tool/system context are consuming the `32768`-token window too quickly, producing compaction/new-session pressure after only a small amount of useful conversation.
+- Remote Alienware exec is not fully validated yet: `pwd` succeeded, while ordinary commands such as `hostname` and `whoami` returned `SYSTEM_RUN_DENIED: approval required`.
+- The next work item is to fix visible thinking/context behavior first, then resolve the remaining remote-command approval mismatch without tearing down the now-working node pairing.
+
+### Current checkpoint
+
+Forge remains the stable sandboxed assistant on port `18789`. Power is now a separate, usable browser-based OpenClaw profile on port `19789` using `qwen3-abliterated:30b`. The Alienware is a real Power node host, not merely an operator device, and is paired, connected, approved, and advertising system commands. The infrastructure milestone is far enough along that the project focus is now usability: stop visible reasoning spam, preserve conversation context, finish reliable Alienware exec, and then use Power for normal project work before adding more infrastructure.
+
 ## 2026-08-05
 
 ### Completed
