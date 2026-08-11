@@ -19,10 +19,12 @@
 - [x] Ollama service enabled and active
 - [x] Ollama bound locally
 - [x] `qwen3-coder:30b` retained for Forge
-- [x] `qwen3-abliterated:30b` retained for Power
-- [x] Both large models individually validated on the RTX 4090
-- [x] Power model validated at `32768` context
+- [x] `qwen3-abliterated:30b` retained as the original Power/rollback alias
+- [x] `qwen3-abliterated-nothink:30b` created for normal Power use
+- [x] Large models individually validated on the RTX 4090
+- [x] Power no-think model validated at `32768` context
 - [x] Forge model validated at `32768` context
+- [x] Power no-think model observed at `100% GPU` residency
 - [x] Temporary 8192-context Power GPU-test alias removed
 - [x] Workflow documented so only one 30B-class model needs to remain loaded at a time
 
@@ -138,7 +140,7 @@
 ## Power OpenClaw profile
 
 - [x] Selected Power model source `hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M`
-- [x] Created Ollama alias `qwen3-abliterated:30b`
+- [x] Created original Ollama alias `qwen3-abliterated:30b`
 - [x] Model reports `qwen3moe`, 30.5B parameters, Q4_K_M
 - [x] Model downloaded size approximately 18 GB
 - [x] Model validated at 100% GPU residency
@@ -152,24 +154,62 @@
 - [x] Power Gateway token authentication enabled
 - [x] `openclaw-gateway-power.service` enabled and active
 - [x] Power dashboard returns HTTP 200 locally
-- [x] Default model reports `ollama/qwen3-abliterated:30b`
-- [x] Harmless full-host create/modify/read/delete exec test completed
+- [x] Harmless full-host create/modify/read/delete exec test completed during initial Power validation
 - [x] `OpenClaw Forge` graphical launcher created
 - [x] `OpenClaw Power` graphical launcher created
 - [x] Power can be opened from the Ubuntu desktop without terminal configuration
 
-## Power model behavior
+## Power no-think model behavior
 
-- [x] Provider entry currently reports `reasoning=false`
-- [x] Provider params currently report `thinking=false`
-- [x] Power model context remains `32768`
-- [ ] Verify a fresh Power session no longer prints large reasoning blocks
-- [ ] Verify OpenClaw session/default thinking and reasoning controls persist across new sessions
-- [ ] Inspect `/status` after a clean start
-- [ ] Inspect `/context list` after a clean start
-- [ ] Confirm several ordinary messages do not immediately consume most of the context window
-- [ ] Retune Power compaction only if the clean-session test still requires it
-- [ ] Increase model context only if 32768 remains insufficient after reasoning output is fixed
+- [x] Provider entry for the no-think alias reports `reasoning=false`
+- [x] Provider params report `thinking=false`
+- [x] `agents.defaults.thinkingDefault=off`
+- [x] `agents.defaults.reasoningDefault=off`
+- [x] Generated Ollama Modelfile inspected
+- [x] Forced final assistant `<think>` prefill identified
+- [x] Derived alias `qwen3-abliterated-nothink:30b` created with final prefill neutralized
+- [x] Historical `.Thinking` rendering logic left intact
+- [x] Direct Ollama exact-response test returns `THINKING: None`
+- [x] Direct Ollama arithmetic test returns `42` with no thinking field
+- [x] No-think alias added to the Power configured model set
+- [x] Default Power model changed to `ollama/qwen3-abliterated-nothink:30b`
+- [x] OpenClaw direct model-run exact-response test passed
+- [x] Browser `/model status` confirms no-think alias is Current and Default
+- [x] Original `qwen3-abliterated:30b` kept as rollback/reference
+
+## Power conversation/context tuning
+
+- [x] Compaction mode set to `default`
+- [x] `reserveTokens=8192`
+- [x] `reserveTokensFloor=8192`
+- [x] `keepRecentTokens=6000`
+- [x] `midTurnPrecheck.enabled=true`
+- [x] `agents.defaults.contextInjection=continuation-skip`
+- [x] `agents.defaults.contextPruning.mode=cache-ttl`
+- [x] `agents.defaults.contextPruning.ttl=5m`
+- [x] `skills.limits.maxSkillsPromptChars=2500`
+- [x] Power config backup created before context optimization
+- [x] Power config validated after changes
+- [x] Power Gateway restarted and HTTP 200 revalidated
+- [x] Skills-list prompt reduced from roughly 17 skills / 1.49K tokens to roughly 10 skills / 611 tokens
+- [x] Fresh early-session context measured around 13K / 33K (~41%)
+- [x] Tool schema block measured around 20,985 chars / 5.25K tokens
+- [x] `cron` identified as the largest individual tool schema at roughly 2.4K tokens
+- [x] Other large schema contributors identified: `skill_workshop`, `exec`, `sessions_spawn`, `process`, `web_search`
+- [ ] Configure Tool Search / on-demand tool loading
+- [ ] Re-measure fresh-session baseline after Tool Search
+- [ ] Substantially reduce the ~13K-token early-session footprint
+- [ ] Confirm a normal long multi-turn conversation survives with much less compaction pressure
+- [ ] Test 64K context only after prompt/tool overhead is reduced
+
+## Power long-term memory
+
+- [ ] Create Power-specific durable memory/checkpoint files separate from Forge
+- [ ] Define stable personal/project facts that should be remembered automatically
+- [ ] Add local semantic retrieval without requiring an OpenAI API key
+- [ ] Make older memory notes/session history searchable from normal Power conversation
+- [ ] Verify a fresh Power session can recall selected durable facts without loading the entire archive into context
+- [ ] Document Power memory backup/recovery
 
 ## Alienware Power tunnel
 
@@ -202,6 +242,8 @@
 - [x] Node approvals snapshot retrieved successfully
 - [x] Node approvals updated successfully using `--file`
 - [x] Node defaults report `security=full`, `ask=off`, `askFallback=full`
+- [x] `system.which` parameter mismatch diagnosed as `bins required`
+- [x] Correct `system.which` call with `bins` array resolved `hostname`, `whoami`, and `bash`
 
 ## Power remote exec targeting
 
@@ -211,9 +253,9 @@
 - [x] Set `tools.exec.mode=full`
 - [x] Set `tools.exec.node=Alienware-15-R3`
 - [x] Power configuration validates with the current exec schema
-- [x] `pwd` executed successfully on the Alienware from the Power browser path
-- [ ] Resolve `SYSTEM_RUN_DENIED: approval required` for `hostname`
-- [ ] Resolve `SYSTEM_RUN_DENIED: approval required` for `whoami`
+- [x] `pwd` executed successfully on the Alienware from an earlier Power browser test
+- [ ] Re-test `hostname` through the final browser-originated exec path
+- [ ] Re-test `whoami` through the final browser-originated exec path
 - [ ] Confirm a normal set of harmless system commands executes consistently
 - [ ] Confirm harmless file create/read/modify/delete through the Power node
 - [ ] Convert the working node process into a persistent service after foreground execution is reliable
@@ -222,16 +264,20 @@
 
 Current priority order:
 
-- [ ] 1. Disable visible thinking/reasoning output
-- [ ] 2. Verify healthy conversation/context behavior
-- [ ] 3. Resolve remaining remote-command approval mismatch
-- [ ] 4. Make the Alienware node persistent
-- [ ] 5. Begin using Power for normal project work
-- [ ] 6. Add stronger confirmation/audit/rollback controls after the workflow is functionally useful
+- [x] 1. Stop visible forced thinking/reasoning output at the model-template level
+- [x] 2. Apply first-pass compaction/context pruning and skills-prompt reduction
+- [x] 3. Measure the remaining context overhead instead of guessing
+- [ ] 4. Configure Tool Search / on-demand tool loading
+- [ ] 5. Build Power long-term memory and local retrieval
+- [ ] 6. Re-run repeated harmless Alienware exec validation and make the node persistent
+- [ ] 7. Test 64K context only after the baseline prompt is lean
+- [ ] 8. Begin using Power for normal project work
+- [ ] 9. Add stronger confirmation/audit/rollback controls after the workflow is functionally useful
 
 See also:
 
 ```text
 docs/19-openclaw-power-profile.md
 docs/20-alienware-power-node.md
+docs/21-power-usability-context-and-memory.md
 ```
