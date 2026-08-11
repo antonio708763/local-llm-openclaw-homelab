@@ -1,5 +1,52 @@
 # Changelog
 
+## 2026-08-11
+
+### Added
+
+- Added `docs/21-power-usability-context-and-memory.md` as the new Power usability checkpoint.
+- Documented the desired long-term architecture: live context as working memory, durable memory as long-term storage, session history as archive, Tool Search for on-demand capabilities, OpenClaw nodes as remote-device hands, and compaction for long conversations.
+- Added the current Power context measurements and the largest tool-schema consumers so future tuning starts from measured data instead of guesses.
+
+### Completed
+
+- Diagnosed why visible Qwen reasoning continued even when OpenClaw and Ollama reported thinking/reasoning disabled.
+- Inspected the generated Ollama Modelfile and found that the final assistant template itself prefilled an opening `<think>` tag.
+- Created the derived Ollama alias `qwen3-abliterated-nothink:30b` by neutralizing only the final forced-thinking prefill while preserving the rest of the template behavior.
+- Verified the no-think model directly through Ollama with `THINKING: None` and exact final-content tests.
+- Verified a second arithmetic response returned only `42` with no thinking field.
+- Registered `qwen3-abliterated-nothink:30b` in the Power Ollama provider and agent configured-model set.
+- Set `ollama/qwen3-abliterated-nothink:30b` as the Power default model while retaining `qwen3-abliterated:30b` as a rollback/reference alias.
+- Verified OpenClaw returned the exact `OPENCLAW_NOTHINK_PASS` test string.
+- Verified the Power web UI `/model status` shows the no-think model as both Current and Default.
+- Set `agents.defaults.thinkingDefault=off` and `agents.defaults.reasoningDefault=off`.
+- Confirmed the no-think model remains at `32768` context and `100% GPU` residency on the RTX 4090.
+- Tuned Power compaction to `mode=default`, `reserveTokens=8192`, `reserveTokensFloor=8192`, `keepRecentTokens=6000`, and enabled `midTurnPrecheck`.
+- Set `agents.defaults.contextInjection=continuation-skip`.
+- Set `agents.defaults.contextPruning.mode=cache-ttl` with a `5m` TTL.
+- Reduced skills prompt injection with `skills.limits.maxSkillsPromptChars=2500`.
+- Created a pre-optimization Power config backup at `~/.openclaw-power/openclaw.json.before-context-optimization-20260811-004536.bak`.
+- Reduced the observed skills-list prompt from roughly 17 skills / 1.49K tokens to roughly 10 skills / 611 tokens.
+- Measured a fresh early Power session at roughly 13K / 33K context, about 41% used after only a handful of short messages.
+- Measured tool schemas at roughly 20,985 characters / 5.25K tokens of prompt overhead.
+- Identified `cron` as the largest single tool-schema cost at roughly 2.4K tokens, followed by `skill_workshop`, `exec`, `sessions_spawn`, `process`, and `web_search`.
+- Confirmed the next context bottleneck is always-loaded tool/schema overhead rather than visible model thinking.
+- Confirmed `system.which` on the Alienware requires a `bins` array and successfully resolved `hostname`, `whoami`, and `bash` paths when called correctly.
+- Updated README, Power profile docs, Alienware node docs, and the implementation roadmap to the August 11 checkpoint.
+
+### Current issues / next work
+
+- The fresh Power prompt still consumes roughly 40% of the current 32K window before a meaningful long conversation develops.
+- The next task is **Tool Search / on-demand tool loading** so normal conversation does not carry every large tool schema on every turn.
+- After Tool Search, build Power-specific durable long-term memory and local semantic retrieval so stable facts and old project knowledge do not have to live permanently in the model context.
+- Re-measure context after Tool Search before deciding whether 64K context is actually useful.
+- Repeated harmless Alienware browser-originated command execution still needs final consistency validation before the remote exec path is declared completely finished.
+- The working Alienware node pairing must not be reset while troubleshooting only the remaining execution-policy layer.
+
+### Current checkpoint
+
+Power now uses `qwen3-abliterated-nothink:30b` by default, visible model-thinking spam is solved at the model-template level, OpenClaw thinking/reasoning defaults are off, compaction/context-pruning settings are in place, and the Alienware node remains paired, connected, approved, and capability-advertising. The project has moved from model/node debugging into prompt-economy and memory architecture. The immediate resume point is Tool Search, then long-term memory/retrieval, then final Alienware execution validation and a later 64K benchmark.
+
 ## 2026-08-10
 
 ### Added
@@ -298,21 +345,3 @@ The self-hosted search, compaction, and durable-memory milestone is complete. Th
 - Backup and recovery notes.
 - Network and security plans for OpenClaw.
 - Read-only Windows and Ubuntu validation scripts.
-- Screenshot evidence for storage, Ollama installation, model download, model response, and GPU validation.
-- Detailed Ollama and `qwen3-coder:30b` validation record.
-- OpenClaw local installation and onboarding documentation.
-- Shutdown and restart commands for safely resuming the project.
-
-### Completed
-
-- Verified Windows data integrity after the partition resize.
-- Configured `Dual_Boot_Share` at `/mnt/Dual_Boot_Share` using UUID `48003BD2003BC62A`.
-- Confirmed NTFS read/write access from Ubuntu using the `ntfs3` driver.
-- Verified NVIDIA driver and CUDA access.
-- Installed Ollama `0.32.3` as an enabled systemd service.
-- Downloaded `qwen3-coder:30b`.
-- Confirmed `100% GPU` model residency on the RTX 4090.
-- Validated a 32,768-token Ollama context allocation with approximately 21.7 GiB of VRAM in use.
-- Installed OpenClaw `2026.7.1-2` and Node.js `24.18.0`.
-- Connected OpenClaw to local Ollama.
-- Installed and validated the local Gateway and TUI.
