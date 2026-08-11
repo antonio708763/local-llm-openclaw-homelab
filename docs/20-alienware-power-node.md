@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Ubuntu Alienware laptop is the first remote computer attached to the `Power` OpenClaw profile as an OpenClaw node host. The RTX 4090 workstation continues to run the LLM and Power Gateway. The Alienware node supplies remote system tools so the Power agent can eventually perform approved work on that laptop.
+The Ubuntu Alienware laptop is the first remote computer attached to the `Power` OpenClaw profile as an OpenClaw node host. The RTX 4090 workstation continues to run the LLM and Power Gateway. The Alienware node supplies remote system tools so the Power agent can perform work on that laptop.
 
 This is separate from simply opening the Power dashboard remotely. The SSH tunnel provides access to the dashboard; the OpenClaw node process provides remote-computer capabilities.
 
@@ -133,6 +133,33 @@ openclaw --profile power nodes pending
 openclaw --profile power nodes describe --node Alienware-15-R3
 ```
 
+### `system.which` requires `bins`
+
+An early invoke attempt used a single-name parameter and failed with:
+
+```text
+INVALID_REQUEST: bins required
+```
+
+In this OpenClaw build the correct shape is an array:
+
+```bash
+openclaw --profile power nodes invoke \
+  --node Alienware-15-R3 \
+  --command system.which \
+  --params '{"bins":["hostname","whoami","bash"]}'
+```
+
+The successful result resolved:
+
+```text
+hostname -> /usr/bin/hostname
+whoami   -> /usr/bin/whoami
+bash     -> /usr/bin/bash
+```
+
+This is now the preferred preflight when verifying which executable paths the node can see.
+
 ## The stale-pairing problem
 
 The most confusing failure looked healthy at first:
@@ -188,7 +215,7 @@ openclaw --profile power nodes describe --node Alienware-15-R3
 openclaw --profile power nodes status --json
 ```
 
-The successful result on August 10, 2026 showed:
+The successful result showed:
 
 ```text
 Status:       paired · connected
@@ -284,9 +311,11 @@ Current expected config:
 
 The legacy `tools.exec.security` and `tools.exec.ask` fields must not be combined with `tools.exec.mode`. OpenClaw rejected that mixed schema during setup.
 
-## Current unresolved execution issue
+## Execution validation status
 
-The node itself is now correctly paired, connected, approved, and advertising `system.run`. However, a browser Power test produced mixed results:
+The node-pairing and capability layers are solved. The node advertises `system.run`, `system.run.prepare`, and `system.which`, and `system.which` successfully resolves ordinary executable paths when called with the correct `bins` parameter.
+
+Earlier browser tests produced mixed execution results:
 
 ```text
 hostname -> SYSTEM_RUN_DENIED: approval required
@@ -294,16 +323,7 @@ whoami   -> SYSTEM_RUN_DENIED: approval required
 pwd      -> succeeded and returned /home/user
 ```
 
-This means the node-pairing problem is solved, but an additional execution-approval path still affects some binaries. Do not tear down the working node pairing while troubleshooting this remaining issue.
-
-The next troubleshooting target is the interaction between:
-
-```text
-Power tools.exec mode
-node exec-approvals policy
-system.run preparation/approval behavior
-per-binary approval state
-```
+Because the node pairing is now healthy, do not tear it down to troubleshoot execution policy. The next validation should focus only on the remaining command approval/run path and should use repeated harmless commands before declaring remote execution fully finished.
 
 ## Fast diagnostic checklist
 
@@ -338,18 +358,23 @@ Approved with caps and commands present
 
 AUTH_TOKEN_MISSING
     -> node process was started without OPENCLAW_GATEWAY_TOKEN.
+
+INVALID_REQUEST: bins required
+    -> system.which was called with the wrong parameter shape; use a bins array.
 ```
 
 ## Current checkpoint
 
-As of August 10, 2026, the Alienware node is no longer missing. It is a real OpenClaw node host, separate from the three operator devices seen in `devices list`, and it is paired, connected, approved, and advertising system commands.
+As of August 11, 2026, the Alienware node is a real OpenClaw node host, separate from the operator devices in `devices list`, and it is paired, connected, approved, and advertising system commands.
 
 The key lesson is to distinguish three layers before changing configuration:
 
 ```text
 1. SSH tunnel connectivity
 2. OpenClaw node pairing/capability approval
-3. Exec-command approval policy
+3. Exec-command approval/run policy
 ```
 
 Troubleshoot them in that order. Changing layer 3 cannot repair a broken or stale layer-2 pairing.
+
+The next project-wide priority is Power Tool Search/context reduction. Final repeated harmless Alienware exec validation remains on the queue after that usability work.
