@@ -109,7 +109,7 @@ Status: **Complete for the current Forge build**
 
 ## Phase 5A — Memory and evidence housekeeping
 
-Status: **Complete for current milestones**
+Status: **Complete for current Forge milestones**
 
 - [x] Update the durable `MEMORY.md` current checkpoint
 - [x] Create and verify `memory/2026-07-28.md`
@@ -178,7 +178,7 @@ Status: **Core connectivity and SSH authentication complete; additional network 
 
 ## Phase 8 — Remote access
 
-Status: **Not started**
+Status: **Not started / deferred**
 
 - [ ] Audit self-hosted NetBird
 - [ ] Enroll the Ubuntu workstation and one remote client
@@ -189,25 +189,33 @@ Status: **Not started**
 
 ## Phase 9 — Controlled interaction with other computers
 
-Status: **Superseded by the Power-first prototype on the Alienware lab node**
+Status: **Power node core complete; persistence and repeated exec validation pending**
 
-The original plan was to build a restricted remote-control path before the high-capability assistant. The project priority changed: establish a functional Power workflow first, test it on the Alienware lab computer, then add stronger restrictions after the workflow is useful.
+The original plan was to build a restricted remote-control path before the high-capability assistant. The priority changed: establish a functional Power workflow first on the Alienware lab computer, then add stronger restrictions after the workflow is useful.
 
 - [x] Choose a lab node: `Alienware-15-R3`
 - [x] Establish authenticated SSH transport to the RTX host
 - [x] Install matching OpenClaw `2026.7.1-2` on the Alienware
 - [x] Create an isolated Power node state directory
 - [x] Connect the Alienware node to the Power Gateway through port `19789`
+- [x] Diagnose that `devices list` shows operator devices rather than node hosts
+- [x] Diagnose missing node token / `AUTH_TOKEN_MISSING`
+- [x] Confirm `--no-tls` is not valid in this OpenClaw node CLI
 - [x] Repair stale node pairing and approve a fresh capability request
 - [x] Confirm the node is paired, connected, approved, and advertises system capabilities
-- [ ] Resolve the remaining per-command execution approval mismatch
-- [ ] Convert the working foreground node process into a reliable persistent service
+- [x] Apply node-side exec defaults from a real JSON file
+- [x] Configure Power `tools.exec` to target the Alienware in full mode
+- [x] Verify `system.which` using the required `bins` array and resolve ordinary executable paths
+- [ ] Re-run repeated harmless browser-originated commands and confirm the final approval/run path is consistent
+- [ ] Convert the working node process into a reliable persistent service
 - [ ] Validate file operations and harmless system administration from Power
 - [ ] Add explicit confirmation behavior for genuinely high-impact operations after the basic workflow is stable
 
+See `docs/20-alienware-power-node.md`.
+
 ## Phase 10 — Separate abliterated OpenClaw Power instance
 
-Status: **In progress and currently prioritized**
+Status: **Core instance complete; usability optimization in progress**
 
 Selected model source:
 
@@ -215,13 +223,19 @@ Selected model source:
 hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M
 ```
 
-Local Power alias:
+Original local alias:
 
 ```text
 qwen3-abliterated:30b
 ```
 
-### Completed
+Current normal Power alias:
+
+```text
+qwen3-abliterated-nothink:30b
+```
+
+### Completed: Power foundation
 
 - [x] Pull the abliterated Qwen GGUF through Ollama
 - [x] Create the local alias `qwen3-abliterated:30b`
@@ -233,27 +247,78 @@ qwen3-abliterated:30b
 - [x] Create separate workspace at `~/.openclaw/workspace-power`
 - [x] Create separate Gateway on `127.0.0.1:19789`
 - [x] Install and enable `openclaw-gateway-power.service`
-- [x] Set `ollama/qwen3-abliterated:30b` as the default Power model
 - [x] Set Power model context and Ollama `num_ctx` to `32768`
 - [x] Validate direct host exec with harmless create/modify/read/delete tests
 - [x] Create separate graphical `OpenClaw Forge` and `OpenClaw Power` launchers
 - [x] Create an Alienware Power SSH tunnel on port `19789`
 - [x] Upgrade the Alienware OpenClaw client to `2026.7.1-2`
 - [x] Connect `Alienware-15-R3` as a Power node host
-- [x] Diagnose the difference between operator devices and node hosts
-- [x] Repair the stale pairing that produced empty capabilities and commands
-- [x] Approve a fresh node request and verify capabilities
-- [x] Apply node-side exec defaults using a JSON file
-- [x] Configure Power `tools.exec` for the Alienware node
+- [x] Repair stale node pairing and approve the real capability request
+- [x] Apply node-side exec defaults and configure Power to target the node
 
-### Current usability problems
+### Completed: thinking/reasoning cleanup
 
-- [ ] Stop visible Qwen reasoning blocks from flooding normal Power chats
-- [ ] Verify thinking/reasoning is disabled persistently for new Power sessions
-- [ ] Retest compaction and context growth in a fresh 32768-token session
-- [ ] Confirm more than a few normal messages can be exchanged without forced session replacement
-- [ ] Resolve `SYSTEM_RUN_DENIED: approval required` for ordinary Alienware commands such as `hostname` and `whoami`
-- [ ] Confirm Power can reliably run harmless commands on the Alienware without random approval mismatches
+- [x] Set `agents.defaults.thinkingDefault=off`
+- [x] Set `agents.defaults.reasoningDefault=off`
+- [x] Prove that provider `thinking=false` alone did not stop visible reasoning
+- [x] Inspect the generated Ollama Modelfile and identify the forced final `<think>` assistant prefill
+- [x] Create `qwen3-abliterated-nothink:30b` with the forced final thinking prefill neutralized
+- [x] Verify direct Ollama response reports `thinking=None`
+- [x] Verify exact-response and arithmetic tests return only final content
+- [x] Register the no-think alias in the Power Ollama provider
+- [x] Add it to the Power agent configured model set
+- [x] Set `ollama/qwen3-abliterated-nothink:30b` as the default Power model
+- [x] Verify `/model status` shows the no-think alias as Current and Default
+- [x] Preserve the original `qwen3-abliterated:30b` alias as rollback/reference
+
+### Completed: first context optimization pass
+
+- [x] Configure compaction mode `default`
+- [x] Set `reserveTokens=8192`
+- [x] Set `reserveTokensFloor=8192`
+- [x] Set `keepRecentTokens=6000`
+- [x] Enable compaction `midTurnPrecheck`
+- [x] Set `agents.defaults.contextInjection=continuation-skip`
+- [x] Set context pruning to `cache-ttl`
+- [x] Set context-pruning TTL to `5m`
+- [x] Set `skills.limits.maxSkillsPromptChars=2500`
+- [x] Back up the Power configuration before context optimization
+- [x] Validate and restart the Power Gateway
+- [x] Measure a clean session with `/status` and `/context detail`
+- [x] Reduce skills-list overhead from roughly 17 skills / 1.49K tokens to roughly 10 skills / 611 tokens
+- [x] Identify that tool schemas still consume roughly 5.25K tokens of baseline context
+- [x] Identify `cron` as the largest single schema cost at roughly 2.4K tokens
+- [x] Record a fresh early-session baseline of roughly 13K / 33K tokens (~41%)
+
+### Current usability priority
+
+The model-thinking problem is now solved. The remaining conversation-length problem is mostly baseline prompt/tool overhead.
+
+- [ ] Configure Tool Search / on-demand tool loading so every tool schema is not injected on every turn
+- [ ] Re-measure a fresh session and substantially reduce the current ~13K-token early-session footprint
+- [ ] Confirm normal multi-turn conversation survives much longer before compaction pressure
+- [ ] Avoid moving to 64K context until baseline prompt overhead is reduced
+
+### Phase 10A — Power long-term memory
+
+Status: **Next after Tool Search**
+
+Desired design:
+
+```text
+Live context     = working memory
+Durable memory   = stable personal/project facts
+Session history  = searchable archive
+Retrieval        = bring old facts back only when relevant
+Compaction       = summarize older live conversation
+```
+
+- [ ] Create durable Power memory files/structure separate from Forge
+- [ ] Decide what stable personal and project facts should be saved automatically
+- [ ] Add local semantic embeddings/retrieval without requiring an OpenAI API key
+- [ ] Make old sessions/notes searchable from normal conversation
+- [ ] Verify a fresh Power session can recall selected durable facts without loading the whole archive into context
+- [ ] Document backup and recovery for Power memory
 
 ### After the workflow is usable
 
@@ -268,13 +333,37 @@ See:
 ```text
 docs/19-openclaw-power-profile.md
 docs/20-alienware-power-node.md
+docs/21-power-usability-context-and-memory.md
 ```
 
-## Phase 11 — Future model and inference experiments
+## Phase 11 — Context expansion and future model/inference experiments
 
 Status: **Planned**
 
+- [ ] After Tool Search and memory work, test Power at `65536` context
+- [ ] Measure RTX 4090 VRAM usage, KV-cache growth, generation speed, and stability at 64K
+- [ ] Keep 32K as the rollback baseline until 64K proves worthwhile
 - [ ] Add and evaluate Qwen3.6-27B as a future model option
 - [ ] Benchmark Ollama against a standalone `llama.cpp` server
 - [ ] Transition the inference backend only after compatibility, performance, context, GPU acceleration, startup, recovery, and rollback validation succeeds
 - [ ] Preserve Ollama as a known-good rollback path during the transition
+
+## Current resume point
+
+Do **not** start another model migration or context-size experiment yet.
+
+Next task:
+
+```text
+Configure Tool Search / on-demand tool loading for Power.
+```
+
+Then:
+
+```text
+Tool Search
+    -> re-measure context
+    -> Power long-term memory + local retrieval
+    -> repeated Alienware exec validation/persistence
+    -> 64K context benchmark
+```
