@@ -24,7 +24,7 @@ Status: **Complete**
 
 ## Phase 2 — Ollama and model
 
-Status: **Complete**
+Status: **Complete for current Forge model**
 
 - [x] Install Ollama `0.32.3`
 - [x] Confirm the Ollama service is enabled and active
@@ -35,7 +35,7 @@ Status: **Complete**
 
 ## Phase 3 — OpenClaw local setup
 
-Status: **Complete**
+Status: **Complete for Forge**
 
 - [x] Install OpenClaw `2026.7.1-2`
 - [x] Install Node.js `24.18.0`
@@ -81,7 +81,7 @@ Status: **Complete**
 
 ## Phase 5 — Web research and managed browser
 
-Status: **Complete**
+Status: **Complete for the current Forge build**
 
 - [x] Install the OpenClaw SearXNG plugin
 - [x] Deploy a self-hosted SearXNG instance
@@ -121,7 +121,7 @@ Status: **Complete for current milestones**
 
 ## Phase 6 — Controlled filesystem access
 
-Status: **Complete**
+Status: **Complete for Forge**
 
 - [x] Create `/mnt/Dual_Boot_Share/Forge_Shared`
 - [x] Select read/write access for the dedicated exchange folder
@@ -142,7 +142,7 @@ Status: **Complete**
 
 ## Phase 7 — Trusted-LAN access
 
-Status: **In progress — trusted-client connectivity and recovery validated**
+Status: **Core connectivity and SSH authentication complete; additional network hardening deferred**
 
 - [x] Inventory Ubuntu interfaces, routes, Gateway settings, listening sockets, and firewall state
 - [x] Reserve the Forge host at `192.168.110.187`
@@ -167,10 +167,14 @@ Status: **In progress — trusted-client connectivity and recovery validated**
 - [x] Test tunnel recovery after Wi-Fi interruption
 - [x] Test tunnel recovery after a Forge-host restart
 - [x] Test recovery after terminating the established server-side SSH tunnel process
-- [ ] Disable SSH password authentication after recovery access is confirmed
+- [x] Confirm emergency access with the dedicated key
+- [x] Disable SSH password authentication
+- [x] Disable keyboard-interactive authentication
+- [x] Confirm the server offers public-key authentication only
 - [ ] Evaluate a dedicated restricted tunnel account
 - [ ] Restrict SSH ingress with UFW and OPNsense
 - [ ] Confirm Guest and IoT VLANs cannot reach the Forge host SSH service
+- [ ] Decide whether to disable inherited root key login completely
 
 ## Phase 8 — Remote access
 
@@ -185,35 +189,92 @@ Status: **Not started**
 
 ## Phase 9 — Controlled interaction with other computers
 
-Status: **Not started**
+Status: **Superseded by the Power-first prototype on the Alienware lab node**
 
-- [ ] Choose a lab node
-- [ ] Create a dedicated service account
-- [ ] Enable read-only inventory first
-- [ ] Add command allowlists and approvals
-- [ ] Verify logging and rollback
-- [ ] Expand permissions only after repeated successful lab tests
+The original plan was to build a restricted remote-control path before the high-capability assistant. The project priority changed: establish a functional Power workflow first, test it on the Alienware lab computer, then add stronger restrictions after the workflow is useful.
 
-## Phase 10 — Separate abliterated OpenClaw instance and remote computer control
+- [x] Choose a lab node: `Alienware-15-R3`
+- [x] Establish authenticated SSH transport to the RTX host
+- [x] Install matching OpenClaw `2026.7.1-2` on the Alienware
+- [x] Create an isolated Power node state directory
+- [x] Connect the Alienware node to the Power Gateway through port `19789`
+- [x] Repair stale node pairing and approve a fresh capability request
+- [x] Confirm the node is paired, connected, approved, and advertises system capabilities
+- [ ] Resolve the remaining per-command execution approval mismatch
+- [ ] Convert the working foreground node process into a reliable persistent service
+- [ ] Validate file operations and harmless system administration from Power
+- [ ] Add explicit confirmation behavior for genuinely high-impact operations after the basic workflow is stable
 
-Status: **Deferred until Phases 7 through 9 establish reliable access, approvals, logging, and rollback**
+## Phase 10 — Separate abliterated OpenClaw Power instance
 
-Requested model:
+Status: **In progress and currently prioritized**
+
+Selected model source:
 
 ```text
-ollama/hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M
+hf.co/mradermacher/Qwen3-30B-A3B-abliterated-erotic-i1-GGUF:Q4_K_M
 ```
 
-- [ ] Pull and validate the model separately without replacing Forge's current model
-- [ ] Create a completely separate OpenClaw instance, workspace, identity, Gateway port, service, and durable memory
-- [ ] Prevent the experimental instance from inheriting Forge credentials, browser profiles, tokens, or production configuration
-- [ ] Evaluate the requested host-command execution mode without the Docker command sandbox
-- [ ] Enforce explicit approval before privileged, destructive, broad, persistent, security-sensitive, or high-blast-radius actions
-- [ ] Require the agent to describe the exact command, target, expected changes, affected files or services, and rollback plan before approval
-- [ ] Define what counts as a major action so approval behavior is deterministic rather than discretionary
-- [ ] Add complete command logging and a visible audit trail
-- [ ] Provide a hard stop and emergency-disable procedure independent of the model
-- [ ] Establish authenticated access from another trusted computer without public port forwarding
-- [ ] Create a dedicated remote-control account and test against a disposable lab computer first
-- [ ] Grant full control only after repeated approval, recovery, and rollback tests succeed
-- [ ] Document the residual risk of using an abliterated model with direct host and remote-computer control
+Local Power alias:
+
+```text
+qwen3-abliterated:30b
+```
+
+### Completed
+
+- [x] Pull the abliterated Qwen GGUF through Ollama
+- [x] Create the local alias `qwen3-abliterated:30b`
+- [x] Confirm Q4_K_M model details and GPU acceleration
+- [x] Confirm the model can run at `32768` context on the RTX 4090
+- [x] Avoid simultaneous residency of multiple 30B-class models
+- [x] Create the separate OpenClaw `power` profile
+- [x] Create separate config at `~/.openclaw-power/openclaw.json`
+- [x] Create separate workspace at `~/.openclaw/workspace-power`
+- [x] Create separate Gateway on `127.0.0.1:19789`
+- [x] Install and enable `openclaw-gateway-power.service`
+- [x] Set `ollama/qwen3-abliterated:30b` as the default Power model
+- [x] Set Power model context and Ollama `num_ctx` to `32768`
+- [x] Validate direct host exec with harmless create/modify/read/delete tests
+- [x] Create separate graphical `OpenClaw Forge` and `OpenClaw Power` launchers
+- [x] Create an Alienware Power SSH tunnel on port `19789`
+- [x] Upgrade the Alienware OpenClaw client to `2026.7.1-2`
+- [x] Connect `Alienware-15-R3` as a Power node host
+- [x] Diagnose the difference between operator devices and node hosts
+- [x] Repair the stale pairing that produced empty capabilities and commands
+- [x] Approve a fresh node request and verify capabilities
+- [x] Apply node-side exec defaults using a JSON file
+- [x] Configure Power `tools.exec` for the Alienware node
+
+### Current usability problems
+
+- [ ] Stop visible Qwen reasoning blocks from flooding normal Power chats
+- [ ] Verify thinking/reasoning is disabled persistently for new Power sessions
+- [ ] Retest compaction and context growth in a fresh 32768-token session
+- [ ] Confirm more than a few normal messages can be exchanged without forced session replacement
+- [ ] Resolve `SYSTEM_RUN_DENIED: approval required` for ordinary Alienware commands such as `hostname` and `whoami`
+- [ ] Confirm Power can reliably run harmless commands on the Alienware without random approval mismatches
+
+### After the workflow is usable
+
+- [ ] Define which actions require explicit confirmation
+- [ ] Add visible command/audit logging that is easy to review
+- [ ] Add a hard-stop/emergency-disable procedure independent of the model
+- [ ] Expand device access only after repeated successful lab tests
+- [ ] Revisit security hardening after the functionality baseline is stable
+
+See:
+
+```text
+docs/19-openclaw-power-profile.md
+docs/20-alienware-power-node.md
+```
+
+## Phase 11 — Future model and inference experiments
+
+Status: **Planned**
+
+- [ ] Add and evaluate Qwen3.6-27B as a future model option
+- [ ] Benchmark Ollama against a standalone `llama.cpp` server
+- [ ] Transition the inference backend only after compatibility, performance, context, GPU acceleration, startup, recovery, and rollback validation succeeds
+- [ ] Preserve Ollama as a known-good rollback path during the transition
